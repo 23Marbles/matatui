@@ -38,7 +38,7 @@ pub mod child {
 
     pub enum ChildMut<'a> {
         Container(&'a mut Container),
-        Text(&'a String),
+        Text(&'a mut String),
     }
 }
 

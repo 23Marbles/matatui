@@ -1,3 +1,5 @@
+use anyhow::bail;
+
 use crate::{
     event::{Event, MouseEvent},
     layout::tree::{
@@ -82,17 +84,26 @@ impl Editor {
     }
 
     #[inline]
-    pub fn handle_event(&mut self, event: Event) -> Result<(), ()> {
+    pub fn handle_event(&mut self, event: Event) -> anyhow::Result<()> {
         match event {
             Event::Mouse(mouse_event) => match mouse_event {
-                MouseEvent::Up => todo!(),
-                MouseEvent::Down => todo!(),
-                MouseEvent::Left => todo!(),
-                MouseEvent::Right => todo!(),
+                MouseEvent::Up => self.move_up(),
+                MouseEvent::Down => self.move_down(),
+                MouseEvent::Left => self.move_left(),
+                MouseEvent::Right => self.move_right(),
             },
-            Event::Char(_) => todo!(),
+            Event::Char(ch) => {
+                if let Some((ChildMut::Text(text), idx)) = self.get_mut_cursor_node() {
+                    text.insert(idx, ch);
+                    self.cursor.text_index += ch.len_utf8();
+                } else {
+                    bail!("The focussed node was not text so no characters could be added")
+                };
+            }
             Event::Backspace => todo!(),
         }
+
+        Ok(())
     }
 }
 
