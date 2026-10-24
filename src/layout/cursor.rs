@@ -21,15 +21,21 @@ pub struct Editor {
 impl Editor {
     pub fn get_global_cursor_offset(&self) -> Option<usize> {
         let mut sequence = self.tree.get_sequence(self.cursor.focussed)?;
-        let mut offset =
-            sequence.x_size_before_index(&self.tree, self.cursor.index)? + self.cursor.text_index;
+        let mut offset = sequence.x_size_before_index(&self.tree, self.cursor.index)?;
+
+        match sequence.get_child(self.cursor.index) {
+            Some(_) => offset = offset.checked_add(self.cursor.text_index)?,
+            None if self.cursor.text_index == 0 => {}
+            None => return None,
+        }
 
         while let Some(container_id) = sequence.parent_id() {
             let container = self.tree.get_container(container_id)?;
             let parent_id = container.parent_id();
             let parent = self.tree.get_sequence(parent_id)?;
 
-            offset += parent.x_size_before_container(&self.tree, container_id)?;
+            offset =
+                offset.checked_add(parent.x_size_before_container(&self.tree, container_id)?)?;
             sequence = parent;
         }
 
@@ -56,5 +62,48 @@ impl Editor {
     #[inline]
     pub fn handle_event(&mut self, event: Event) -> Result<(), ()> {
         todo!();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn editor(index: usize, text_index: usize) -> Editor {
+        let tree = super::super::tree::Tree::new();
+        let focussed = tree.root();
+
+        Editor {
+            tree,
+            cursor: Cursor {
+                focussed,
+                index,
+                text_index,
+                preferred_x: None,
+            },
+        }
+    }
+
+    #[test]
+    fn cursor_at_end_of_empty_root_has_zero_offset() {
+        let editor = editor(0, 0);
+
+        assert_eq!(editor.get_global_cursor_offset(), Some(0));
+        assert!(editor.get_cursor_node().is_none());
+    }
+
+    #[test]
+    fn cursor_index_beyond_end_of_root_is_invalid() {
+        let editor = editor(1, 0);
+
+        assert_eq!(editor.get_global_cursor_offset(), None);
+        assert!(editor.get_cursor_node().is_none());
+    }
+
+    #[test]
+    fn cursor_at_end_of_sequence_cannot_have_a_text_offset() {
+        let editor = editor(0, 1);
+
+        assert_eq!(editor.get_global_cursor_offset(), None);
     }
 }
