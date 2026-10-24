@@ -1,10 +1,12 @@
 use crate::{
-    event::Event,
+    event::{Event, MouseEvent},
     layout::tree::{
-        SequenceId,
+        SequenceId, Tree,
         sequence::child::{ChildMut, ChildRef},
     },
 };
+
+pub mod navigation;
 
 pub struct Cursor {
     focussed: SequenceId,
@@ -14,11 +16,31 @@ pub struct Cursor {
 }
 
 pub struct Editor {
-    tree: super::tree::Tree,
+    tree: Tree,
     cursor: Cursor,
 }
 
+impl Default for Editor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Editor {
+    pub fn new() -> Self {
+        let tree = Tree::new();
+
+        Self {
+            cursor: Cursor {
+                focussed: tree.root(),
+                index: 0,
+                text_index: 0,
+                preferred_x: None,
+            },
+            tree,
+        }
+    }
+
     pub fn get_global_cursor_offset(&self) -> Option<usize> {
         let mut sequence = self.tree.get_sequence(self.cursor.focussed)?;
         let mut offset = sequence.x_size_before_index(&self.tree, self.cursor.index)?;
@@ -61,7 +83,16 @@ impl Editor {
 
     #[inline]
     pub fn handle_event(&mut self, event: Event) -> Result<(), ()> {
-        todo!();
+        match event {
+            Event::Mouse(mouse_event) => match mouse_event {
+                MouseEvent::Up => todo!(),
+                MouseEvent::Down => todo!(),
+                MouseEvent::Left => todo!(),
+                MouseEvent::Right => todo!(),
+            },
+            Event::Char(_) => todo!(),
+            Event::Backspace => todo!(),
+        }
     }
 }
 
