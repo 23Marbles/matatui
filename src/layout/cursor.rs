@@ -1,0 +1,60 @@
+use crate::{
+    event::Event,
+    layout::tree::{
+        SequenceId,
+        sequence::child::{ChildMut, ChildRef},
+    },
+};
+
+pub struct Cursor {
+    focussed: SequenceId,
+    index: usize,
+    text_index: usize,
+    preferred_x: Option<usize>,
+}
+
+pub struct Editor {
+    tree: super::tree::Tree,
+    cursor: Cursor,
+}
+
+impl Editor {
+    pub fn get_global_cursor_offset(&self) -> Option<usize> {
+        let mut sequence = self.tree.get_sequence(self.cursor.focussed)?;
+        let mut offset =
+            sequence.x_size_before_index(&self.tree, self.cursor.index)? + self.cursor.text_index;
+
+        while let Some(container_id) = sequence.parent_id() {
+            let container = self.tree.get_container(container_id)?;
+            let parent_id = container.parent_id();
+            let parent = self.tree.get_sequence(parent_id)?;
+
+            offset += parent.x_size_before_container(&self.tree, container_id)?;
+            sequence = parent;
+        }
+
+        Some(offset)
+    }
+
+    pub fn get_cursor_node(&self) -> Option<(ChildRef<'_>, usize)> {
+        Some((
+            self.tree
+                .get_sequence(self.cursor.focussed)?
+                .get_child(self.cursor.index)?,
+            self.cursor.text_index,
+        ))
+    }
+
+    pub fn get_mut_cursor_node(&mut self) -> Option<(ChildMut<'_>, usize)> {
+        let seq_mut = self.tree.get_mut_sequence(self.cursor.focussed)?;
+
+        let child = seq_mut.into_child_mut(self.cursor.index)?;
+
+        Some((child, self.cursor.text_index))
+    }
+
+    #[inline]
+    pub fn handle_event(&mut self, event: Event) -> Result<(), ()> {
+        todo!();
+    }
+}
