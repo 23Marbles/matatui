@@ -1,10 +1,14 @@
 use anyhow::bail;
+use ratatui::widgets::Widget;
 
 use crate::{
     event::{Event, MouseEvent},
     layout::tree::{
         SequenceId, Tree,
-        sequence::child::{ChildMut, ChildRef},
+        sequence::{
+            SequenceWidget,
+            child::{ChildMut, ChildRef},
+        },
     },
 };
 
@@ -17,9 +21,36 @@ pub struct Cursor {
     preferred_x: Option<usize>,
 }
 
+impl Cursor {
+    pub fn focussed(&self) -> SequenceId {
+        self.focussed
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    pub fn text_index(&self) -> usize {
+        self.text_index
+    }
+}
+
 pub struct Editor {
     tree: Tree,
     cursor: Cursor,
+}
+
+impl Widget for &Editor {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
+        SequenceWidget {
+            seq_ref: self
+                .tree
+                .get_sequence(self.tree.root())
+                .expect("Should have a root"),
+            cursor: Some(&self.cursor),
+        }
+        .render(area, buf);
+    }
 }
 
 impl Default for Editor {

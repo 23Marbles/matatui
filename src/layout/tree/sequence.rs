@@ -1,8 +1,12 @@
 use std::array::from_fn;
 
+use ratatui::{buffer::Buffer, layout::{Rect, Size, VerticalAlignment}, text::Line, widgets::Widget};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::layout::tree::sequence::child::{Child, ChildMut, ChildRef};
+use crate::layout::{
+    cursor::Cursor,
+    tree::sequence::child::{Child, ChildMut, ChildRef},
+};
 
 use super::*;
 
@@ -137,6 +141,7 @@ impl Sequence {
 }
 
 pub struct SequenceRef<'a> {
+    id: SequenceId,
     seq: &'a Sequence,
     tree: &'a Tree,
 }
@@ -144,6 +149,7 @@ pub struct SequenceRef<'a> {
 impl<'a> SequenceRef<'a> {
     pub fn get(tree: &'a Tree, id: SequenceId) -> Option<Self> {
         Some(SequenceRef {
+            id,
             seq: tree.sequences.get(id)?,
             tree,
         })
@@ -250,5 +256,107 @@ impl Deref for SequenceMut<'_> {
     fn deref(&self) -> &Self::Target {
         self.tree.sequences.get(self.id)
             .expect("On construction `Self::id` is guaranteed to be valid and is not invalidated by mutations on `Self::tree`")
+    }
+}
+
+pub struct SequenceWidget<'a> {
+    pub seq_ref: SequenceRef<'a>,
+    pub cursor: Option<&'a Cursor>,
+    alignment: VerticalAlignment
+}
+
+impl SequenceWidget<'_> {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut Buffer) -> Rect {
+        let mut max_height = 1;
+        let mut total_width = 0;
+
+        let mut y_pos = None;
+
+        let draw_calls: Vec<(u16, Box<dyn FnOnce(Rect, &mut Buffer)>)> = Vec::new();
+
+        if let Some(cursor) = self.cursor
+            && cursor.focussed() == self.seq_ref.id
+        {
+            for (idx, child) in self.seq_ref.children.iter().enumerate() {
+                match child {
+                    Child::Container(container_id) => todo!(),
+                    Child::Text(text) => {
+                        let line = Line::raw(text);
+
+                        let w = line.width() as u16;
+
+                        let text_area = area.resize(Size::new(w, area.height));
+
+                        area.x += w;
+                        let Some(width) = area.width.checked_sub(w) else {
+                            break;
+                        };
+                        area.width = width;
+
+                        line.render(text_area, buf);
+                    }
+                }
+            }
+        } else {
+            for child in &self.seq_ref.children {
+                match child {
+                    Child::Container(container_id) => todo!(),
+                    Child::Text(text) => {
+                        let line = Line::raw(text);
+
+                        let w = line.width() as u16;
+
+                        let text_area = area.resize(Size::new(w, area.height));
+
+                        area.x += w;
+                        let Some(width) = area.width.checked_sub(w) else {
+                            break;
+                        };
+                        area.width = width;
+
+                        line.render(text_area, buf);
+                    }
+                }
+            }
+        }
+
+        let mut area = area;
+
+        let y_pos = match self.alignment {
+            VerticalAlignment::Top => {
+                area = area.resize(Size::new(total_width, max_height));
+                y_pos.unwrap_or(max_height / 2)
+            },
+            VerticalAlignment::Center => {
+                let mid_top_offset = (area.height - max_height) / 2;
+
+                area = area.resize(Size::new(total_width, max_height));
+                area.x -= mid_top_offset;
+
+                y_pos.map_or(max_height / 2, |y| y - mid_top_offset)
+            },
+            VerticalAlignment::Bottom => {
+                let mid_top_offset = area.height - max_height;
+
+                area = area.resize(Size::new(total_width, max_height));
+                area.x -= mid_top_offset;
+
+                y_pos.map_or(max_height / 2, |y| y - mid_top_offset)
+            },
+        };
+
+        let area = area;
+        
+        let mut current_x = 0;
+
+        for (width, func) in draw_calls {
+            func(Rect { x: current_x, width, ..area }, buf);
+
+            current_x += width;
+        };
+
+        assert_eq!(current_x, total_width);
+
+        area
     }
 }
