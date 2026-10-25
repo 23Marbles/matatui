@@ -19,6 +19,7 @@ impl ContainerKind {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Container {
     parent_id: SequenceId,
     kind: ContainerKind,

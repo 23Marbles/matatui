@@ -5,10 +5,7 @@ use crate::{
     event::{Event, MouseEvent},
     layout::tree::{
         SequenceId, Tree,
-        sequence::{
-            SequenceWidget,
-            child::{ChildMut, ChildRef},
-        },
+        sequence::child::{ChildMut, ChildRef},
     },
 };
 

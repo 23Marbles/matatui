@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+};
 
 use slotmap::{SlotMap, new_key_type};
 
@@ -15,6 +18,7 @@ new_key_type! {
     pub struct SequenceId;
 }
 
+#[derive(Debug, Clone)]
 pub struct Tree {
     containers: SlotMap<ContainerId, Container>,
     sequences: SlotMap<SequenceId, Sequence>,
