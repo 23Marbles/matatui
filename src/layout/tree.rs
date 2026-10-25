@@ -11,6 +11,7 @@ use crate::layout::tree::{
 };
 
 pub mod container;
+pub mod render;
 pub mod sequence;
 
 new_key_type! {
@@ -38,8 +39,13 @@ impl Tree {
         }
     }
 
-    pub fn root(&self) -> SequenceId {
+    pub fn root_id(&self) -> SequenceId {
         self.root
+    }
+
+    pub fn root(&self) -> SequenceRef<'_> {
+        self.get_sequence(self.root)
+            .expect("Root should not be removed at any point")
     }
 
     #[inline(always)]

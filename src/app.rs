@@ -1,5 +1,5 @@
 use crossterm::event;
-use ratatui::{DefaultTerminal, Frame, layout::Rect};
+use ratatui::{DefaultTerminal, Frame};
 
 use crate::{event::Event, layout::cursor::Editor};
 

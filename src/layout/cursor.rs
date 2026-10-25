@@ -5,6 +5,7 @@ use crate::{
     event::{Event, MouseEvent},
     layout::tree::{
         SequenceId, Tree,
+        render::{draw_node, layout_sequence},
         sequence::child::{ChildMut, ChildRef},
     },
 };
@@ -39,14 +40,11 @@ pub struct Editor {
 
 impl Widget for &Editor {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        SequenceWidget {
-            seq_ref: self
-                .tree
-                .get_sequence(self.tree.root())
-                .expect("Should have a root"),
-            cursor: Some(&self.cursor),
-        }
-        .render(area, buf);
+        let seq = self.tree.root();
+
+        let node = layout_sequence(seq);
+
+        draw_node(&node, area, buf);
     }
 }
 
@@ -62,7 +60,7 @@ impl Editor {
 
         Self {
             cursor: Cursor {
-                focussed: tree.root(),
+                focussed: tree.root_id(),
                 index: 0,
                 text_index: 0,
                 preferred_x: None,
@@ -141,7 +139,7 @@ mod tests {
 
     fn editor(index: usize, text_index: usize) -> Editor {
         let tree = super::super::tree::Tree::new();
-        let focussed = tree.root();
+        let focussed = tree.root_id();
 
         Editor {
             tree,

@@ -19,6 +19,7 @@ pub mod child {
     pub enum Child {
         Container(ContainerId),
         Text(String),
+        Operator(char),
     }
 
     impl Child {
@@ -28,6 +29,7 @@ pub mod child {
                     tree.get_container(*container_id).map(|c| c.x_size(tree))?
                 }
                 Child::Text(s) => Some(s.graphemes(true).count()),
+                Child::Operator(_) => Some(3),
             }
         }
     }
@@ -35,11 +37,13 @@ pub mod child {
     pub enum ChildRef<'a> {
         Container(&'a Container),
         Text(&'a str),
+        Operator(char),
     }
 
     pub enum ChildMut<'a> {
         Container(&'a mut Container),
         Text(&'a mut String),
+        Operator(&'a mut char),
     }
 
     pub struct Children<'a> {
@@ -205,6 +209,7 @@ impl<'a> SequenceRef<'a> {
                 self.tree.containers.get(*container_id)?,
             )),
             Child::Text(s) => Some(ChildRef::Text(s)),
+            Child::Operator(ch) => Some(ChildRef::Operator(*ch)),
         }
     }
 
@@ -253,6 +258,7 @@ impl<'a> SequenceMut<'a> {
         match child {
             Child::Container(id) => Some(ChildRef::Container(self.tree.containers.get(*id)?)),
             Child::Text(text) => Some(ChildRef::Text(text)),
+            Child::Operator(ch) => Some(ChildRef::Operator(*ch)),
         }
     }
 
@@ -263,6 +269,7 @@ impl<'a> SequenceMut<'a> {
         match child {
             Child::Container(id) => Some(ChildMut::Container(self.tree.containers.get_mut(*id)?)),
             Child::Text(text) => Some(ChildMut::Text(text)),
+            Child::Operator(ch) => Some(ChildMut::Operator(ch)),
         }
     }
 
@@ -273,6 +280,7 @@ impl<'a> SequenceMut<'a> {
         match child {
             Child::Container(id) => Some(ChildMut::Container(self.tree.containers.get_mut(*id)?)),
             Child::Text(text) => Some(ChildMut::Text(text)),
+            Child::Operator(ch) => Some(ChildMut::Operator(ch)),
         }
     }
 
