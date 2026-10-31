@@ -10,7 +10,7 @@ trait LayoutEngine {
     type FontLayout: FontLayout<Self::Unit>;
     
     fn layout_sequence(SequenceRef, &Cursor) -> MeasurementResult<Self>;
-    fn layout_container(ContainerRef, &Cursor) -> MeasurementResult;
+    fn layout_container(ContainerRef, &Cursor) -> MeasurementResult<Self>;
 }
 ```
 
