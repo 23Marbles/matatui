@@ -1,0 +1,317 @@
+{
+  "main": {
+    "id": "71dcd4f9be42dd16",
+    "type": "split",
+    "children": [
+      {
+        "id": "4e201b79ddb21f37",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "67b4cc20dc95d044",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Rendering.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Rendering"
+            }
+          },
+          {
+            "id": "de323d6806a53762",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Rendering.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Rendering"
+            }
+          },
+          {
+            "id": "efd91841b3efab36",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Debugger.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Debugger"
+            }
+          },
+          {
+            "id": "bc19cc3905135d57",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Data Structures/Tree.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Tree"
+            }
+          },
+          {
+            "id": "43b2ac35295c64f8",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Event Handling.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Event Handling"
+            }
+          },
+          {
+            "id": "b55918c6dfaf1cfa",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Cursor Movement.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Cursor Movement"
+            }
+          },
+          {
+            "id": "e4adfedc204334b7",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Rendering.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Rendering"
+            }
+          },
+          {
+            "id": "e6dd5501209b6050",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Rendering.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Rendering"
+            }
+          },
+          {
+            "id": "4afce26ec3e0f63f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Data Structures/Tree.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Tree"
+            }
+          }
+        ],
+        "currentTab": 8
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "4466d0e222f3bd09",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "1e0a8065d9ae680e",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {
+            "sortOrder": "alphabetical",
+            "autoReveal": false,
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-folder-closed",
+          "title": "Files"
+        }
+      },
+      {
+        "id": "d0d1a33198f6ef44",
+        "type": "leaf",
+        "state": {
+          "type": "search",
+          "state": {
+            "query": "",
+            "matchingCase": false,
+            "explainSearch": false,
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical"
+          },
+          "icon": "lucide-search",
+          "title": "Search"
+        }
+      },
+      {
+        "id": "991e512c0505f161",
+        "type": "leaf",
+        "state": {
+          "type": "tag",
+          "state": {
+            "sortOrder": "frequency",
+            "useHierarchy": true,
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-tags",
+          "title": "Tags"
+        }
+      },
+      {
+        "id": "38f60b7b86172a28",
+        "type": "leaf",
+        "state": {
+          "type": "all-properties",
+          "state": {
+            "sortOrder": "frequency",
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-archive",
+          "title": "All properties"
+        }
+      },
+      {
+        "id": "2b8f76d44f779612",
+        "type": "leaf",
+        "state": {
+          "type": "bookmarks",
+          "state": {
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-bookmark",
+          "title": "Bookmarks"
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "right": {
+    "id": "ffbed05309e7d9c6",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "ba26a1dadf0941e5",
+        "type": "leaf",
+        "state": {
+          "type": "backlink",
+          "state": {
+            "file": "Data Structures/Tree.md",
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical",
+            "showSearch": false,
+            "searchQuery": "",
+            "backlinkCollapsed": false,
+            "unlinkedCollapsed": true
+          },
+          "icon": "links-coming-in",
+          "title": "Backlinks"
+        }
+      },
+      {
+        "id": "2035f6768d5655ea",
+        "type": "leaf",
+        "state": {
+          "type": "outgoing-link",
+          "state": {
+            "file": "Event Handling.md",
+            "linksCollapsed": false,
+            "unlinkedCollapsed": true
+          },
+          "icon": "links-going-out",
+          "title": "Outgoing links"
+        }
+      },
+      {
+        "id": "2c25b0870e12a67a",
+        "type": "leaf",
+        "state": {
+          "type": "outline",
+          "state": {
+            "file": "Event Handling.md",
+            "followCursor": false,
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-list",
+          "title": "Outline"
+        }
+      }
+    ],
+    "currentTab": 2
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "inventtasks:InventTasks — Vault": false
+    }
+  },
+  "active": "4afce26ec3e0f63f",
+  "lastOpenFiles": [
+    "Tasks/Space - System/List - Reminders/_list.md",
+    "Data Structures/Tree.md",
+    "Tasks/Space - Tree Structure/_space.md",
+    "Tasks/Space - Tree Structure",
+    "Tasks/_workspace-state.md",
+    "Tasks/_workspace.md",
+    "Tasks/Space - System/List - Short notes/_list.md",
+    "Tasks/Space - System/List - Short notes",
+    "Tasks/Space - System/List - Reminders",
+    "Tasks/Space - System/_space.md",
+    "Tasks/Space - System",
+    "Tasks",
+    "Debugger.md",
+    "Data Structures",
+    "Impl/ChatGPT Plan.md",
+    "Impl",
+    "Rendering.md",
+    "Layout.md",
+    "Event Handling.md",
+    "Selection.md",
+    "Cursor Movement.md",
+    "total.txt",
+    "aggregate.py",
+    "Partial Containers.md"
+  ]
+}

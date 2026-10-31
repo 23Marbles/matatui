@@ -1,0 +1,131 @@
+
+
+# Selection.md
+## Cursor
+At the start of selection the `Cursor::child_index`  is saved. When selecting certain cursor features are changed. This includes:
+- Moving up and down now simply moves the cursor to the start or end of the current sequence,
+- Moving out of a sequence moves into the parent container's parent sequence and pushes the current `SequenceId` and the parent `ContainerId` onto a stack.
+- Containers in the current sequence are not descended into but moved over, unless they match the `ContainerId` on the top of the stack then they are descended into, the top of the stack popped and the top of the stack's `SequenceId` is descended into from the container.
+## Insertion 
+The insertion of containers will now take in the selected area as a new `Sequence` and create itself with that sequence already within it. Sequences that normally require confirmation (such as brackets) will be automatically confirmed.
+## Rendering
+If a container is selected it is rendered with the toggle `highlighted` set to `true`. If it is a text child and the cursor is partway through it then it is given the selected range.
+
+# Cursor Movement.md
+## Cursor
+```rust
+struct Cursor {
+    sequence_id: SequenceId,
+    child_index: Option<(usize, Option<usize>)>
+}
+```
+## Logical
+Logical left/right movement is determined by the pointed to sequence. The cursor points to after the index. A child index of `None` points to the start of the sequence. The inner `Option` can only be `Some` when the child index points to a `Text` child.
+## Spatial #todo
+
+## Clicking #todo 
+Allows the cursor to be changed by clicking anywhere. Uses the root sequence.
+
+# Event Handling.md
+## Editor
+```rust
+struct Editor {
+    cursor: Cursor,
+    tree: Tree,
+}
+```
+The editor first attempts getting the parent container of the cursor's `SequenceId`. If there is a parent then `ContainerMut::handle_event` is called on it. If there is no parent or if `ContainerMut::handle_event` returns `Some(<event>)` then then the cursor's `SequenceId` has  `SequenceMut::handle_event` called.
+## Container
+```rust
+struct ContainerMut(ContainerId, &mut Tree);
+
+fn handle_event(ContainerMut, &mut Cursor, Event) -> Option<Event>;
+```
+The container can choose whether to handle the event or not. It can also choose whether the event should be handled by the sequence pointed at by returning `Some(<event>)`.
+## Sequence
+```rust
+struct SequenceMut(SequenceId, &mut Tree);
+
+fn handle_event(SequenceMut, &mut Cursor, Event);
+```
+The sequence must handle the `Event`.
+
+# Rendering.md
+## Render Engine
+
+The context is passed in with things like defined functions and variables, font, colours, etc...
+
+```rust
+trait Renderer<E: LayoutEngine> {
+    type Rect = Rect<E::Unit>;
+    type Canvas; // e.g. &mut ratatui::Buffer
+    
+    fn render_layout(MeasurementResult<E>, Self::Rect, Self::Canvas, Context<'_>);
+    
+    fn render_sequence(SequenceRef, &Cursor, Self::Rect, Self::Canvas, Context<'_>) {
+        // default impl
+    }
+    fn render_container(ContainerRef, &Cursor, Self::Rect, Self::Canvas, Context<'_>) {
+        // default impl
+    }
+}
+```
+
+
+# Partial Containers.md
+## Overview 
+Some containers require more than one input in order to create them. These have two container kinds, partial and complete. Partial Containers can resolve into multiple different containers based on the characters input into them. They are typically greedy consuming the rest of a sequence (left or right) and relinquishing unneeded parts of that sequence back to the original sequence when the container is fully confirmed. They may show greyed out characters to show what the current state of confirmation is and will act as if that is confirmed if the full expression is input. They can be confirmed either from within or if selected in a sequence (so that typing inserts after the container) and something is typed. They may be reverted to a partial state if certain characters are deleted (e.g. the ')' in a brackets container).
+
+# Layout.md
+## Engine 
+
+```rust
+trait FontLayout<U> {
+    fn measure_str(font_name: impl AsRef<str>, &str) -> Measurement<U>;
+}
+
+trait LayoutEngine {
+    type Unit;
+    type FontLayout: FontLayout<Self::Unit>;
+    
+    fn layout_sequence(SequenceRef, &Cursor) -> MeasurementResult<Self>;
+    fn layout_container(ContainerRef, &Cursor) -> MeasurementResult;
+}
+```
+
+All measurements are taken from the top left and are positive integers.
+
+```rust
+struct Measurement<U> {
+    ascent: U,
+    descent: U,
+    width: U,
+}
+
+struct PositionedNodeRef<E: LayoutEngine> {
+    measurement: Measurement<E::Unit>,
+    x: E::Unit,
+    y: E::Unit,
+    kind: NodeKindRef<E>,
+}
+
+enum NodeKindRef<E: LayoutEngine> {
+    Sequence(Vec<PositionedNodeRef<E>>),
+    Text(&str),
+    Operator(char),
+    ... // Container node kinds
+}
+```
+
+There are owned versions of all of these for displaying not currently being edited expressions without storing all associated data such as the tree.
+
+```rust
+struct MeasurementResult<E: LayoutEngine> {
+    measurement: Measurement<E::Unit>,
+    kind: NodeKindRef<E>,
+    cursor_pos: Option<(E::Unit, E::Unit, E::Unit)> // (x, y, height)
+}
+```
+
+# Debugging.md
+Debugging can debug many things including different renderers with different layouts by opening them up in different windows.
