@@ -1,29 +1,29 @@
-use std::{
-    fmt::Debug,
-    ops::{Deref, DerefMut},
-};
+mod child;
+mod container;
+mod sequence;
 
-use slotmap::{SlotMap, new_key_type};
 
-use crate::layout::tree::{
-    container::{Container, ContainerKind, ContainerMut, ContainerRef},
-    sequence::{Sequence, SequenceMut, SequenceRef},
-};
+use slotmap::SlotMap;
 
-pub mod container;
-pub mod render;
-pub mod sequence;
 
-new_key_type! {
+pub use child::*;
+pub use container::*;
+pub use sequence::*;
+
+
+slotmap::new_key_type! {
     pub struct ContainerId;
     pub struct SequenceId;
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
-    containers: SlotMap<ContainerId, Container>,
-    sequences: SlotMap<SequenceId, Sequence>,
     root: SequenceId,
+
+    sequences: SlotMap<SequenceId, Sequence>,
+
+    containers: SlotMap<ContainerId, Container>,
 }
 
 impl Tree {
@@ -39,33 +39,34 @@ impl Tree {
         }
     }
 
-    pub fn root_id(&self) -> SequenceId {
-        self.root
-    }
-
     pub fn root(&self) -> SequenceRef<'_> {
         self.get_sequence(self.root)
             .expect("Root should not be removed at any point")
     }
-
-    #[inline(always)]
-    pub fn get_container(&self, id: ContainerId) -> Option<ContainerRef<'_>> {
-        ContainerRef::get(self, id)
+    pub fn root_id(&self) -> SequenceId {
+        self.root
     }
 
-    #[inline(always)]
-    pub fn get_mut_container<'a>(&'a mut self, id: ContainerId) -> Option<ContainerMut<'a>> {
-        ContainerMut::get(self, id)
+    #[must_use]
+    pub fn clear_sequence(&mut self, id: SequenceId) -> Option<OwnedSequence> {
+        Some(self.get_mut_sequence(id)?.clear())
     }
 
     #[inline(always)]
     pub fn get_sequence(&self, id: SequenceId) -> Option<SequenceRef<'_>> {
         SequenceRef::get(self, id)
     }
-
+    #[inline(always)]
+    pub fn get_container(&self, id: ContainerId) -> Option<ContainerRef<'_>> {
+        ContainerRef::get(self, id)
+    }
     #[inline(always)]
     pub fn get_mut_sequence(&mut self, id: SequenceId) -> Option<SequenceMut<'_>> {
         SequenceMut::get(self, id)
+    }
+    #[inline(always)]
+    pub fn get_mut_container<'a>(&'a mut self, id: ContainerId) -> Option<ContainerMut<'a>> {
+        ContainerMut::get(self, id)
     }
 }
 
