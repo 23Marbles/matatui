@@ -1,0 +1,77 @@
+(
+    containers: [
+        (
+            value: None,
+            version: 0,
+        ),
+        (
+            value: Some((
+                parent_id: (
+                    idx: 1,
+                    version: 1,
+                ),
+                kind: Fraction(
+                    numerator: (
+                        idx: 2,
+                        version: 1,
+                    ),
+                    denominator: (
+                        idx: 3,
+                        version: 1,
+                    ),
+                ),
+            )),
+            version: 1,
+        ),
+    ],
+    sequences: [
+        (
+            value: None,
+            version: 0,
+        ),
+        (
+            value: Some((
+                parent: None,
+                children: [
+                    Atom(Text("2")),
+                    Atom(Operator('+')),
+                    Container((
+                        idx: 1,
+                        version: 1,
+                    )),
+                    Atom(Operator('-')),
+                    Atom(Text("5")),
+                ],
+            )),
+            version: 1,
+        ),
+        (
+            value: Some((
+                parent: Some((
+                    idx: 1,
+                    version: 1,
+                )),
+                children: [
+                    Atom(Text("x")),
+                ],
+            )),
+            version: 1,
+        ),
+        (
+            value: Some((
+                parent: Some((
+                    idx: 1,
+                    version: 1,
+                )),
+                children: [
+                    Atom(Text("3")),
+                ],
+            )),
+            version: 1,
+        ),
+    ],
+    root: (
+        idx: 1,
+        version: 1,
+    ),
+)
