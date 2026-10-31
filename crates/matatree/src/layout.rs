@@ -1,11 +1,9 @@
 use num_traits::Num;
 
-
 use crate::{
     editor::cursor::Cursor,
     tree::{ContainerRef, SequenceRef},
 };
-
 
 /// A trait used by `LayoutEngine` implementors in order to measure the dimensions of a peice of text.
 /// The measurement measures from the baseline of the text.

@@ -4,7 +4,6 @@ use crate::{
     tree::{ContainerRef, SequenceRef},
 };
 
-
 pub trait Renderer<E: LayoutEngine> {
     type Rect: From<layout::Rect<E::Unit>>;
 
@@ -39,7 +38,14 @@ pub trait Renderer<E: LayoutEngine> {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct RenderContext<'a> {
     pub defined_functions: &'a [&'a str],
     pub defined_variables: &'a [&'a str],
+}
+
+impl RenderContext<'_> {
+    pub fn none() -> Self {
+        Self::default()
+    }
 }

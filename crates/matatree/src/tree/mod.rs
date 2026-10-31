@@ -2,14 +2,11 @@ mod child;
 mod container;
 mod sequence;
 
-
 use slotmap::SlotMap;
-
 
 pub use child::*;
 pub use container::*;
 pub use sequence::*;
-
 
 slotmap::new_key_type! {
     pub struct ContainerId;
