@@ -14,25 +14,25 @@ pub trait Renderer<L: LayoutEngine> {
         layout: MeasurementResult<L>,
         area: Self::Rect,
         canvas: &mut Self::Canvas,
-        ctx: RenderContext<'_>,
+        ctx: &RenderContext<'_>,
     );
     #[inline]
     fn render_sequence(
         sequence: SequenceRef<'_>,
-        cursor: &Cursor,
+        cursor: Option<&Cursor>,
         area: Self::Rect,
         canvas: &mut Self::Canvas,
-        ctx: RenderContext<'_>,
+        ctx: &RenderContext<'_>,
     ) {
         Self::render_layout(L::layout_sequence(sequence, cursor), area, canvas, ctx);
     }
     #[inline]
     fn render_container(
         container: ContainerRef<'_>,
-        cursor: &Cursor,
+        cursor: Option<&Cursor>,
         area: Self::Rect,
         canvas: &mut Self::Canvas,
-        ctx: RenderContext<'_>,
+        ctx: &RenderContext<'_>,
     ) {
         Self::render_layout(L::layout_container(container, cursor), area, canvas, ctx);
     }
@@ -45,7 +45,10 @@ pub struct RenderContext<'a> {
 }
 
 impl RenderContext<'_> {
-    pub fn none() -> Self {
-        Self::default()
+    pub const fn none() -> Self {
+        Self {
+            defined_functions: &[],
+            defined_variables: &[],
+        }
     }
 }

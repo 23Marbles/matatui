@@ -71,7 +71,7 @@ impl<'a> ContainerRef<'a> {
         })
     }
 
-    pub fn tree(&self) -> &Tree {
+    pub fn tree(&self) -> &'a Tree {
         self.tree
     }
 

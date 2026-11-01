@@ -1,21 +1,36 @@
-use matatree::editor::Editor;
+use matatree::{
+    editor::{CursoredTree, Editor},
+    tree::Tree,
+};
 
 use crate::{layout::RatatuiLayout, render::RatatuiRender};
 
 pub(crate) mod layout;
 pub(crate) mod render;
 
-pub struct RatatuiEditor(pub matatree::editor::CursoredTree);
+pub struct RatatuiEditor {
+    tree: matatree::editor::CursoredTree,
+    x_offset: u16,
+}
+
+impl RatatuiEditor {
+    pub fn from_tree(tree: Tree) -> Self {
+        Self {
+            tree: CursoredTree::from_tree(tree),
+            x_offset: 0,
+        }
+    }
+}
 
 impl Editor for RatatuiEditor {
     fn layout<'a, E: matatree::layout::LayoutEngine>(
         &'a self,
     ) -> matatree::layout::MeasurementResult<'a, E> {
-        self.0.layout()
+        self.tree.layout()
     }
 
     fn handle_event(&mut self, event: matatree::editor::event::Event) {
-        self.0.handle_event(event);
+        self.tree.handle_event(event);
     }
 }
 

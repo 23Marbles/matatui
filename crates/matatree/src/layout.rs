@@ -24,11 +24,11 @@ pub trait LayoutEngine: Sized {
 
     fn layout_sequence<'a>(
         sequence: SequenceRef<'a>,
-        cursor: &Cursor,
+        cursor: Option<&Cursor>,
     ) -> MeasurementResult<'a, Self>;
     fn layout_container<'a>(
         container: ContainerRef<'a>,
-        cursor: &Cursor,
+        cursor: Option<&Cursor>,
     ) -> MeasurementResult<'a, Self>;
 }
 
@@ -39,10 +39,15 @@ pub enum NodeKindRef<'a, L: LayoutEngine> {
     Sequence(Vec<PositionedNodeRef<'a, L>>),
 
     Operator(char),
-    // Container node kinds
+
+    Fraction {
+        numerator: Box<PositionedNodeRef<'a, L>>,
+        denominator: Box<PositionedNodeRef<'a, L>>,
+    },
 }
 
 /// A non-positioned measurement with an ascent and descent
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Measurement<U: Num> {
     /// The width of the measurement
     pub width: U,
@@ -67,14 +72,16 @@ pub struct MeasurementResult<'a, L: LayoutEngine> {
 
     pub measurement: Measurement<L::Unit>,
 
-    /// The cursor position (if any). Is stored as (x, y)
-    pub cursor_pos: Option<(L::Unit, L::Unit)>,
-    pub cursor_height: L::Unit,
+    /// The cursor position (if any). Is stored as (x, y, height).
+    /// Is a difference from the current measurement's rect's upper left
+    pub cursor_pos: Option<(L::Unit, L::Unit, L::Unit)>,
 }
 
 pub struct PositionedNodeRef<'a, L: LayoutEngine> {
+    /// X difference from the parent's X, not global
     pub x: L::Unit,
 
+    /// Y difference from the parent's Y, not global
     pub y: L::Unit,
 
     pub kind: NodeKindRef<'a, L>,
