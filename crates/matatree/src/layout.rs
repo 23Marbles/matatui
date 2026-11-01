@@ -33,25 +33,15 @@ pub trait LayoutEngine: Sized {
 }
 
 /// A reference to a specific kind of node for rendering purposes
-pub enum NodeKindRef<'a, E: LayoutEngine> {
+pub enum NodeKindRef<'a, L: LayoutEngine> {
     Text(&'a str),
 
-    Sequence(Vec<PositionedNodeRef<'a, E>>),
+    Sequence(Vec<PositionedNodeRef<'a, L>>),
 
     Operator(char),
     // Container node kinds
 }
 
-/// All positions are measured from the top left
-pub struct Rect<U: Num> {
-    pub x: U,
-
-    pub y: U,
-
-    pub width: U,
-
-    pub height: U,
-}
 /// A non-positioned measurement with an ascent and descent
 pub struct Measurement<U: Num> {
     /// The width of the measurement
@@ -72,22 +62,22 @@ impl<U: Num + Clone> Measurement<U> {
     }
 }
 
-pub struct MeasurementResult<'a, E: LayoutEngine> {
-    pub kind: NodeKindRef<'a, E>,
+pub struct MeasurementResult<'a, L: LayoutEngine> {
+    pub kind: NodeKindRef<'a, L>,
 
-    pub measurement: Measurement<E::Unit>,
+    pub measurement: Measurement<L::Unit>,
 
     /// The cursor position (if any). Is stored as (x, y)
-    pub cursor_pos: Option<(E::Unit, E::Unit)>,
-    pub cursor_height: E::Unit,
+    pub cursor_pos: Option<(L::Unit, L::Unit)>,
+    pub cursor_height: L::Unit,
 }
 
-pub struct PositionedNodeRef<'a, E: LayoutEngine> {
-    pub x: E::Unit,
+pub struct PositionedNodeRef<'a, L: LayoutEngine> {
+    pub x: L::Unit,
 
-    pub y: E::Unit,
+    pub y: L::Unit,
 
-    pub kind: NodeKindRef<'a, E>,
+    pub kind: NodeKindRef<'a, L>,
 
-    pub measurement: Measurement<E::Unit>,
+    pub measurement: Measurement<L::Unit>,
 }

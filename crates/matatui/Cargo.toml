@@ -1,0 +1,9 @@
+[package]
+name = "matatui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+matatree = { path = "../matatree" }
+ratatui = "0.30.2"
+unicode-segmentation = "1.13.3"

@@ -18,14 +18,18 @@ impl Editor {
         E::layout_sequence(self.tree.root(), &self.cursor)
     }
 
-    pub fn render<'a, R: Renderer<E>, E: LayoutEngine>(&'a self, area: R::Rect, canvas: R::Canvas) {
+    pub fn render<'a, R: Renderer<E>, E: LayoutEngine>(
+        &'a self,
+        area: R::Rect,
+        canvas: &mut R::Canvas,
+    ) {
         R::render_layout(self.layout(), area, canvas, RenderContext::none());
     }
 
     pub fn render_with_ctx<'a, R: Renderer<E>, E: LayoutEngine>(
         &'a self,
         area: R::Rect,
-        canvas: R::Canvas,
+        canvas: &mut R::Canvas,
         ctx: impl FnOnce(&Self) -> RenderContext<'_>,
     ) {
         R::render_layout(self.layout(), area, canvas, ctx(&self));

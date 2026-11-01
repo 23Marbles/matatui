@@ -1,19 +1,19 @@
 use crate::{
     editor::cursor::Cursor,
-    layout::{self, LayoutEngine, MeasurementResult},
+    layout::{LayoutEngine, MeasurementResult},
     tree::{ContainerRef, SequenceRef},
 };
 
-pub trait Renderer<E: LayoutEngine> {
-    type Rect: From<layout::Rect<E::Unit>>;
+pub trait Renderer<L: LayoutEngine> {
+    type Rect;
 
     // The canvas type which is passed to the rendere to draw on; e.g. &mut ratatui::Buffer
     type Canvas;
 
     fn render_layout(
-        layout: MeasurementResult<E>,
+        layout: MeasurementResult<L>,
         area: Self::Rect,
-        canvas: Self::Canvas,
+        canvas: &mut Self::Canvas,
         ctx: RenderContext<'_>,
     );
     #[inline]
@@ -21,20 +21,20 @@ pub trait Renderer<E: LayoutEngine> {
         sequence: SequenceRef<'_>,
         cursor: &Cursor,
         area: Self::Rect,
-        canvas: Self::Canvas,
+        canvas: &mut Self::Canvas,
         ctx: RenderContext<'_>,
     ) {
-        Self::render_layout(E::layout_sequence(sequence, cursor), area, canvas, ctx);
+        Self::render_layout(L::layout_sequence(sequence, cursor), area, canvas, ctx);
     }
     #[inline]
     fn render_container(
         container: ContainerRef<'_>,
         cursor: &Cursor,
         area: Self::Rect,
-        canvas: Self::Canvas,
+        canvas: &mut Self::Canvas,
         ctx: RenderContext<'_>,
     ) {
-        Self::render_layout(E::layout_container(container, cursor), area, canvas, ctx);
+        Self::render_layout(L::layout_container(container, cursor), area, canvas, ctx);
     }
 }
 
