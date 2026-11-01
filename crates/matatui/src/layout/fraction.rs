@@ -29,8 +29,8 @@ pub fn layout_fraction<'a>(
 
     let measurement = Measurement {
         width: max(numerator_measurement.width, denominator_measurement.width).saturating_add(2),
-        ascent: numerator_measurement.height().saturating_add(2),
-        descent: denominator_measurement.height().saturating_add(1),
+        ascent: numerator_measurement.height().saturating_add(1),
+        descent: denominator_measurement.height(),
     };
 
     let numerator_node: PositionedNodeRef<'a, RatatuiLayout> = {
