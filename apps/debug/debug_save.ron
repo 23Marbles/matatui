@@ -1,29 +1,8 @@
 (
-    containers: [
-        (
-            value: None,
-            version: 0,
-        ),
-        (
-            value: Some((
-                parent_id: (
-                    idx: 1,
-                    version: 1,
-                ),
-                kind: Fraction(
-                    numerator: (
-                        idx: 2,
-                        version: 1,
-                    ),
-                    denominator: (
-                        idx: 3,
-                        version: 1,
-                    ),
-                ),
-            )),
-            version: 1,
-        ),
-    ],
+    root: (
+        idx: 1,
+        version: 1,
+    ),
     sequences: [
         (
             value: None,
@@ -70,8 +49,29 @@
             version: 1,
         ),
     ],
-    root: (
-        idx: 1,
-        version: 1,
-    ),
+    containers: [
+        (
+            value: None,
+            version: 0,
+        ),
+        (
+            value: Some((
+                kind: Fraction(
+                    numerator: (
+                        idx: 2,
+                        version: 1,
+                    ),
+                    denominator: (
+                        idx: 3,
+                        version: 1,
+                    ),
+                ),
+                parent_id: (
+                    idx: 1,
+                    version: 1,
+                ),
+            )),
+            version: 1,
+        ),
+    ],
 )

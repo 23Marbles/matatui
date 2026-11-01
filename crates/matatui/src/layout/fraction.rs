@@ -27,8 +27,6 @@ pub fn layout_fraction<'a>(
         if cursor_pos1.is_none() { cursor } else { None },
     );
 
-    let cursor_pos = cursor_pos1.or(cursor_pos2);
-
     let measurement = Measurement {
         width: max(numerator_measurement.width, denominator_measurement.width).saturating_add(2),
         ascent: numerator_measurement.height().saturating_add(2),
@@ -55,6 +53,26 @@ pub fn layout_fraction<'a>(
             measurement: denominator_measurement,
         }
     };
+
+    let cursor_pos = (|| match (cursor_pos1, cursor_pos2) {
+        (None, None) => None,
+        (Some((x, y, h)), None) => Some((
+            x.checked_add(numerator_node.x)?,
+            y.checked_add(numerator_node.y)?,
+            h,
+        )),
+        (None, Some((x, y, h))) => Some((
+            x.checked_add(denominator_node.x)?,
+            y.checked_add(denominator_node.y)?,
+            h,
+        )),
+        (Some(_), Some(_)) => {
+            log::error!(
+                "Both sequences in a fraction reported having a cursor position, one is lying so no cursor passed up"
+            );
+            None
+        }
+    })();
 
     MeasurementResult {
         measurement,

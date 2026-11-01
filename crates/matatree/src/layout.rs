@@ -88,3 +88,21 @@ pub struct PositionedNodeRef<'a, L: LayoutEngine> {
 
     pub measurement: Measurement<L::Unit>,
 }
+
+impl<L: LayoutEngine> PositionedNodeRef<'_, L> {
+    #[inline(always)]
+    pub fn right(&self) -> L::Unit
+    where
+        L::Unit: Clone
+    {
+        self.x.clone() + self.measurement.width.clone()
+    }
+
+    #[inline(always)]
+    pub fn bottom(&self) -> L::Unit
+    where
+        L::Unit: Clone
+    {
+        self.y.clone() - self.measurement.height()
+    }
+}

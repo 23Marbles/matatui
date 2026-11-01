@@ -2404,6 +2404,7 @@ dependencies = [
 name = "matatui"
 version = "0.1.0"
 dependencies = [
+ "log",
  "matatree",
  "ratatui",
  "unicode-segmentation",

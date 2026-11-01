@@ -24,7 +24,10 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
     ) {
         match layout.kind {
             NodeKindRef::Text(text) => {
-                if let Some(line_y) = area.bottom().checked_add(layout.measurement.descent) {
+                if let Some(line_y) = area
+                    .y
+                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                {
                     Text::raw(text).centered().render(
                         Rect {
                             y: line_y,
@@ -37,7 +40,10 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 };
             }
             NodeKindRef::Operator(ch) => {
-                if let Some(line_y) = area.bottom().checked_add(layout.measurement.descent) {
+                if let Some(line_y) = area
+                    .y
+                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                {
                     Text::raw(ch.to_string()).centered().render(
                         Rect {
                             y: line_y,
@@ -53,7 +59,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 for node_ref in positioned_node_refs {
                     let (Some(x), Some(y)) = (
                         area.x.checked_add(node_ref.x),
-                        area.y.checked_sub(node_ref.y),
+                        area.y.checked_add(node_ref.y),
                     ) else {
                         continue;
                     };
@@ -88,7 +94,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 // Numerator
                 if let (Some(x), Some(y)) = (
                     area.x.checked_add(numerator.x),
-                    area.y.checked_sub(numerator.y),
+                    area.y.checked_add(numerator.y),
                 ) {
                     let numerator_rect = Rect {
                         x,
@@ -112,7 +118,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 // Denominator
                 if let (Some(x), Some(y)) = (
                     area.x.checked_add(denominator.x),
-                    area.y.checked_sub(denominator.y),
+                    area.y.checked_add(denominator.y),
                 ) {
                     let denominator_rect = Rect {
                         x,
@@ -133,7 +139,10 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                     );
                 }
 
-                if let Some(line_y) = area.bottom().checked_add(layout.measurement.descent) {
+                if let Some(line_y) = area
+                    .y
+                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                {
                     let text = repeat_n('─', layout.measurement.width as usize).collect::<String>();
 
                     Text::raw(text).centered().render(
@@ -154,7 +163,12 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 let Some(cell) = area
                     .x
                     .checked_add(x)
-                    .and_then(|x| buf.cell_mut((x, area.y.checked_sub(y.checked_add(y_offset)?)?)))
+                    .and_then(|x| {
+                        area.y
+                            .checked_add(y)?
+                            .checked_add(y_offset)
+                            .and_then(|y| buf.cell_mut((x, y)))
+                    })
                 else {
                     continue;
                 };

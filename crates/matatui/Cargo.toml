@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+log = "0.4.35"
 matatree = { path = "../matatree" }
 ratatui = "0.30.2"
 unicode-segmentation = "1.13.3"
