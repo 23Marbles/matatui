@@ -1,4 +1,5 @@
 pub mod cursor;
+pub mod event;
 
 use crate::{
     editor::cursor::Cursor,
@@ -7,18 +8,28 @@ use crate::{
     tree::Tree,
 };
 
-pub struct Editor {
+pub struct CursoredTree {
     tree: Tree,
 
     cursor: Cursor,
 }
 
-impl Editor {
-    pub fn layout<'a, E: LayoutEngine>(&'a self) -> MeasurementResult<'a, E> {
+impl Editor for CursoredTree {
+    fn layout<'a, E: LayoutEngine>(&'a self) -> MeasurementResult<'a, E> {
         E::layout_sequence(self.tree.root(), &self.cursor)
     }
 
-    pub fn render<'a, R: Renderer<E>, E: LayoutEngine>(
+    fn handle_event(&mut self, event: event::Event) {
+        match event {}
+    }
+}
+
+pub trait Editor {
+    fn layout<'a, E: LayoutEngine>(&'a self) -> MeasurementResult<'a, E>;
+
+    fn handle_event(&mut self, event: event::Event);
+
+    fn render<'a, R: Renderer<E>, E: LayoutEngine>(
         &'a self,
         area: R::Rect,
         canvas: &mut R::Canvas,
@@ -26,7 +37,7 @@ impl Editor {
         R::render_layout(self.layout(), area, canvas, RenderContext::none());
     }
 
-    pub fn render_with_ctx<'a, R: Renderer<E>, E: LayoutEngine>(
+    fn render_with_ctx<'a, R: Renderer<E>, E: LayoutEngine>(
         &'a self,
         area: R::Rect,
         canvas: &mut R::Canvas,
