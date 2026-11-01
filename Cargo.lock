@@ -3634,6 +3634,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui_showcase"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "crossterm",
+ "matatree",
+ "matatui",
+ "ratatui",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "raw-window-handle"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
