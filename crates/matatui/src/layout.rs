@@ -90,11 +90,7 @@ impl LayoutEngine for RatatuiLayout {
 
             cursor_pos = cursor_pos.or_else(|| {
                 res.cursor_pos.and_then(|(x, y, h)| {
-                    Some((
-                        x.checked_add(current_x_pos)?,
-                        y.checked_add(child_y)?,
-                        h,
-                    ))
+                    Some((x.checked_add(current_x_pos)?, y.checked_add(child_y)?, h))
                 })
             });
 
