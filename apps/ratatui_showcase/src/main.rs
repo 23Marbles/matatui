@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use clap::Parser;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use matatree::{editor::Editor, tree::Tree};
+use matatree::editor::{CursoredTree, Editor};
 use matatui::RatatuiEditor;
 
 #[derive(Debug, clap::Parser)]
@@ -13,7 +13,7 @@ struct Args {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let tree: Tree = ron::from_str(&fs::read_to_string(args.load_path)?)?;
+    let tree: CursoredTree = ron::from_str(&fs::read_to_string(args.load_path)?)?;
 
     let mut editor = RatatuiEditor::from_tree(tree);
 

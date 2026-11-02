@@ -18,11 +18,8 @@ pub struct RatatuiEditor {
 }
 
 impl RatatuiEditor {
-    pub fn from_tree(tree: Tree) -> Self {
-        Self {
-            tree: CursoredTree::from_tree(tree),
-            x_offset: 0,
-        }
+    pub fn from_tree(tree: CursoredTree) -> Self {
+        Self { tree, x_offset: 0 }
     }
 }
 

@@ -93,7 +93,7 @@ impl<L: LayoutEngine> PositionedNodeRef<'_, L> {
     #[inline(always)]
     pub fn right(&self) -> L::Unit
     where
-        L::Unit: Clone
+        L::Unit: Clone,
     {
         self.x.clone() + self.measurement.width.clone()
     }
@@ -101,7 +101,7 @@ impl<L: LayoutEngine> PositionedNodeRef<'_, L> {
     #[inline(always)]
     pub fn bottom(&self) -> L::Unit
     where
-        L::Unit: Clone
+        L::Unit: Clone,
     {
         self.y.clone() - self.measurement.height()
     }

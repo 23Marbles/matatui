@@ -7,10 +7,7 @@ use std::{
 };
 
 use bitflags::bitflags;
-use matatree::{
-    editor::CursoredTree,
-    tree::{SequenceId, Tree},
-};
+use matatree::{editor::CursoredTree, tree::SequenceId};
 use ron::ser::PrettyConfig;
 
 use crate::{command::TreeEdit, tree::draw_tree};
@@ -19,7 +16,7 @@ bitflags! {
     #[derive(Debug, Clone, Copy, Default)]
     pub struct VisibleSections: u8 {
         const TREE = 1 << 0;
-        const CONTROLLER = 1 << 1;
+        const CURSOR = 1 << 1;
     }
 }
 
@@ -30,7 +27,7 @@ pub struct Context<'a> {
 
     pub frame: &'a mut eframe::Frame,
 
-    pub edit_list: Vec<TreeEdit>,
+    pub edit_list: &'a mut Vec<TreeEdit>,
 }
 
 #[derive(Debug, Default)]
@@ -78,18 +75,39 @@ impl eframe::App for DebugApp {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let visible_sections = self.visible_sections;
 
-        let mut context = Context {
-            app: self,
-            ui,
-            frame,
-            edit_list: Vec::new(),
-        };
+        let mut edit_list = Vec::new();
 
-        if visible_sections.contains(VisibleSections::TREE) {
-            draw_tree(&mut context);
-        }
+        ui.vertical(|ui| {
+            let mut context = Context {
+                app: self,
+                ui,
+                frame,
+                edit_list: &mut edit_list,
+            };
 
-        for edit in context.edit_list {
+            if visible_sections.contains(VisibleSections::TREE) {
+                draw_tree(&mut context);
+            };
+
+            if visible_sections.contains(VisibleSections::CURSOR) {
+                context.ui.horizontal(|ui| {
+                    if ui.small_button("<").clicked() {
+                        context.edit_list.push(TreeEdit::Left);
+                    }
+
+                    if ui.small_button(">").clicked() {
+                        context.edit_list.push(TreeEdit::Right);
+                    }
+
+                    let cursor = context.app.editor.cursor();
+
+                    ui.label(format!("Id: {:?}", cursor.sequence_id()));
+                    ui.label(format!("{:?}", cursor.child_index()));
+                });
+            };
+        });
+
+        for edit in edit_list {
             self.apply_edit(edit);
         }
     }
@@ -98,7 +116,7 @@ impl eframe::App for DebugApp {
         log::info!("Save called");
 
         if let Some(ref path) = self.save_path {
-            let contents = match ron::ser::to_string_pretty(&self.tree, PrettyConfig::new()) {
+            let contents = match ron::ser::to_string_pretty(&self.editor, PrettyConfig::new()) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("Serialize error when saving: {e}");

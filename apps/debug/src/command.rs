@@ -41,37 +41,49 @@ pub enum TreeEdit {
     DeleteContainer {
         id: ContainerId,
     },
+    Left,
+    Right,
 }
 
 impl DebugApp {
     pub fn apply_edit(&mut self, edit: TreeEdit) {
         match edit {
             TreeEdit::InsertFraction { parent, index } => {
-                self.tree
+                self.editor
+                    .tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .insert_container(index, ContainerKind::fraction)
                     .expect("Failed to create child");
             }
             TreeEdit::AddFraction { parent } => {
-                self.tree
+                self.editor
+                    .tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .add_container(ContainerKind::fraction)
                     .expect("Failed to create child");
             }
             TreeEdit::DeleteContainer { id } => {
-                self.tree.get_mut_container(id).unwrap().delete();
+                self.editor
+                    .tree_mut()
+                    .get_mut_container(id)
+                    .unwrap()
+                    .delete();
             }
-            TreeEdit::AddAtom { atom, parent } => {
-                self.tree.get_mut_sequence(parent).unwrap().add_atom(atom)
-            }
+            TreeEdit::AddAtom { atom, parent } => self
+                .editor
+                .tree_mut()
+                .get_mut_sequence(parent)
+                .unwrap()
+                .add_atom(atom),
             TreeEdit::InsertAtom {
                 parent,
                 index,
                 atom,
             } => self
-                .tree
+                .editor
+                .tree_mut()
                 .get_mut_sequence(parent)
                 .unwrap()
                 .insert_atom(index, atom),
@@ -81,7 +93,8 @@ impl DebugApp {
                 atom,
             } => {
                 match self
-                    .tree
+                    .editor
+                    .tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .get_child_mut(index)
@@ -94,12 +107,15 @@ impl DebugApp {
                 };
             }
             TreeEdit::DeleteChild { parent, index } => assert!(
-                self.tree
+                self.editor
+                    .tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .delete_child(index)
                     .is_some()
             ),
+            TreeEdit::Left => self.editor.move_left(),
+            TreeEdit::Right => self.editor.move_right(),
         }
     }
 }

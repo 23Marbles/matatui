@@ -16,12 +16,31 @@ pub struct CursoredTree {
     cursor: Cursor,
 }
 
+impl Default for CursoredTree {
+    fn default() -> Self {
+        let tree = Tree::default();
+
+        Self {
+            cursor: Cursor::new(&tree),
+            tree: Default::default(),
+        }
+    }
+}
+
 impl CursoredTree {
     pub fn from_tree(tree: Tree) -> Self {
         Self {
             cursor: Cursor::new(&tree),
             tree,
         }
+    }
+
+    pub fn tree_mut(&mut self) -> &mut Tree {
+        &mut self.tree
+    }
+
+    pub fn cursor(&self) -> Cursor {
+        self.cursor
     }
 }
 
