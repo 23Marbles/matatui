@@ -39,7 +39,9 @@ impl LayoutEngine for RatatuiLayout {
             descent: 0,
         };
 
-        let mut results = sequence
+        // TODO fraction slections not being rendered with the rest
+
+        let results = sequence
             .children()
             .into_iter()
             .map(|child| match child {
@@ -50,7 +52,7 @@ impl LayoutEngine for RatatuiLayout {
                         check_cursor.then_some(cursor).flatten(),
                     );
 
-                    check_cursor |= res.cursor_pos.is_some();
+                    check_cursor ^= res.cursor_pos.is_some();
 
                     measurement.ascent = max(res.measurement.ascent, measurement.ascent);
                     measurement.descent = max(res.measurement.descent, measurement.descent);
@@ -58,41 +60,68 @@ impl LayoutEngine for RatatuiLayout {
                     res
                 }
             })
-            .collect::<Vec<_>>()
-            .into_iter();
+            .collect::<Vec<_>>();
 
-        let mut cursor_pos = None;
+        let cursor_child = this_sequence_highlighted
+            .then(|| cursor.and_then(Cursor::child_index))
+            .flatten();
 
-        let mut positioned_children = Vec::new();
+        let mut cursor_pos = if this_sequence_highlighted && cursor_child.is_none() {
+            Some((0, measurement.ascent - 1, 1))
+        } else {
+            None
+        };
 
-        let mut current_x_pos = 0;
+        let mut positioned_children = Vec::with_capacity(results.len());
+        let mut current_x_pos: u16 = 0;
 
-        if let Some(res) = results.next() {
-            let child_y = measurement.ascent - res.measurement.ascent;
-            cursor_pos = cursor_pos.or_else(|| {
-                res.cursor_pos
-                    .and_then(|(x, y, h)| Some((x, y.checked_add(child_y)?, h)))
-            });
+        for (idx, res) in results.into_iter().enumerate() {
+            if idx > 0 {
+                current_x_pos += 1;
+            }
 
-            positioned_children.push(PositionedNodeRef {
-                x: 0,
-                y: child_y,
-                kind: res.kind,
-                measurement: res.measurement,
-            });
-
-            current_x_pos += res.measurement.width;
-        }
-
-        for res in results {
-            current_x_pos += 1;
             let child_y = measurement.ascent - res.measurement.ascent;
 
-            cursor_pos = cursor_pos.or_else(|| {
-                res.cursor_pos.and_then(|(x, y, h)| {
-                    Some((x.checked_add(current_x_pos)?, y.checked_add(child_y)?, h))
-                })
-            });
+            if let Some((cursor_idx, text_idx)) = cursor_child {
+                if cursor_idx == idx {
+                    let text_offset = match (&res.kind, text_idx) {
+                        (NodeKindRef::Text(_), Some(text_idx)) => text_idx as u16,
+                        (NodeKindRef::Text(_), None) => 0,
+                        (NodeKindRef::Operator(_), _) => {
+                            if let Some(ChildRef::Container(_)) = cursor_idx
+                                .checked_add(1)
+                                .and_then(|idx| sequence.get_child(idx))
+                            {
+                                0
+                            } else {
+                                1
+                            }
+                        }
+                        (NodeKindRef::Fraction { .. }, _) => {
+                            if let Some(ChildRef::Container(_)) = cursor_idx
+                                .checked_add(1)
+                                .and_then(|idx| sequence.get_child(idx))
+                            {
+                                res.measurement.width.saturating_sub(1)
+                            } else {
+                                res.measurement.width
+                            }
+                        }
+                        (NodeKindRef::Sequence(_), _) => {
+                            unreachable!("Sequence cannot be a child of a sequence")
+                        }
+                    };
+                    cursor_pos = current_x_pos
+                        .checked_add(text_offset)
+                        .and_then(|x| Some((x.checked_add(1)?, measurement.ascent - 1, 1)));
+                }
+            } else if !this_sequence_highlighted {
+                cursor_pos = cursor_pos.or_else(|| {
+                    res.cursor_pos.and_then(|(x, y, h)| {
+                        Some((x.checked_add(current_x_pos)?, y.checked_add(child_y)?, h))
+                    })
+                });
+            }
 
             positioned_children.push(PositionedNodeRef {
                 x: current_x_pos,
@@ -102,10 +131,6 @@ impl LayoutEngine for RatatuiLayout {
             });
 
             current_x_pos += res.measurement.width;
-        }
-
-        if cursor_pos.is_none() && this_sequence_highlighted {
-            cursor_pos = Some((0, measurement.ascent - 1, 1))
         }
 
         measurement.width = current_x_pos;
@@ -127,5 +152,51 @@ impl LayoutEngine for RatatuiLayout {
                 denominator,
             } => fraction::layout_fraction(container, cursor, numerator, denominator),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use matatree::{
+        editor::cursor::{Cursor, CursorControl},
+        tree::{Atom, ContainerKind, Tree},
+    };
+
+    use super::*;
+
+    #[test]
+    fn cursor_after_fraction_tracks_the_following_atom() {
+        let mut tree = Tree::new();
+        let fraction_id = {
+            let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
+            root.add_atom(Atom::Text("a".into()));
+            let fraction_id = root.add_container(ContainerKind::fraction).unwrap();
+            root.add_atom(Atom::Text("b".into()));
+            fraction_id
+        };
+        let (numerator, denominator) = match tree.get_container(fraction_id).unwrap().kind() {
+            ContainerKind::Fraction {
+                numerator,
+                denominator,
+            } => (*numerator, *denominator),
+        };
+
+        let root = tree.root();
+        let cursor = root.move_right(Cursor::new(&tree)).unwrap();
+        let cursor = root.move_right(cursor).unwrap();
+        let cursor = tree
+            .get_sequence(numerator)
+            .unwrap()
+            .move_right(cursor)
+            .unwrap();
+        let cursor = tree
+            .get_sequence(denominator)
+            .unwrap()
+            .move_right(cursor)
+            .unwrap();
+        let cursor = root.move_right(cursor).unwrap();
+
+        let layout = RatatuiLayout::layout_sequence(root, Some(&cursor));
+        assert_eq!(layout.cursor_pos, Some((5, 1, 1)));
     }
 }

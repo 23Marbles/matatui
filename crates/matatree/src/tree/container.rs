@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ContainerKind {
     Fraction {
@@ -28,7 +28,7 @@ pub enum OwnedContainerKind {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Container {
     pub(super) kind: ContainerKind,
@@ -50,12 +50,31 @@ impl Container {
     }
 }
 
+#[derive(Debug, Copy)]
 pub struct ContainerRef<'a> {
     id: ContainerId,
 
     tree: &'a Tree,
 
     container: &'a Container,
+}
+
+impl Clone for ContainerRef<'_> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            tree: self.tree,
+            container: self.container,
+        }
+    }
+}
+
+impl PartialEq for ContainerRef<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.tree.root_id() == other.tree.root_id()
+            && self.container == other.container
+    }
 }
 
 impl<'a> ContainerRef<'a> {

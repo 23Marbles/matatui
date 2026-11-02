@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use egui::{CollapsingHeader, WidgetText};
-use matatree::tree::{Atom, ChildRef, ContainerRef, SequenceId, SequenceRef};
+use matatree::{
+    editor::Editor,
+    tree::{Atom, ChildRef, ContainerRef, SequenceId, SequenceRef},
+};
 
 use crate::{app, command::TreeEdit};
 
@@ -14,7 +17,7 @@ pub fn draw_tree(context: &mut app::Context<'_>) {
     } = context;
 
     debug_sequence(
-        app.tree.root(),
+        app.editor.tree().root(),
         "Root",
         ui,
         frame,

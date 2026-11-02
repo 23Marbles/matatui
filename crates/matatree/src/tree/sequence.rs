@@ -51,6 +51,11 @@ impl<'a> SequenceRef<'a> {
             tree,
         })
     }
+
+    pub fn child_count(&self) -> usize {
+        self.children.len()
+    }
+
     pub fn get_child(&self, idx: usize) -> Option<ChildRef<'a>> {
         let child = self.seq.children.get(idx)?;
 

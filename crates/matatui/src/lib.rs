@@ -1,7 +1,11 @@
 use matatree::{
-    editor::{CursoredTree, Editor},
+    editor::{
+        CursoredTree, Editor,
+        event::{CursorDirection, Event as MatatreeEvent},
+    },
     tree::Tree,
 };
+use ratatui::crossterm::event::{Event, KeyCode};
 
 use crate::{layout::RatatuiLayout, render::RatatuiRender};
 
@@ -23,14 +27,39 @@ impl RatatuiEditor {
 }
 
 impl Editor for RatatuiEditor {
+    type Event = Event;
+
     fn layout<'a, E: matatree::layout::LayoutEngine>(
         &'a self,
     ) -> matatree::layout::MeasurementResult<'a, E> {
         self.tree.layout()
     }
 
-    fn handle_event(&mut self, event: matatree::editor::event::Event) {
+    fn handle_event(&mut self, event: Self::Event) {
+        let event = match event {
+            Event::Key(key_event) => {
+                if !key_event.is_press() {
+                    match key_event.code {
+                        KeyCode::Left => MatatreeEvent::MoveCursorLogical {
+                            directon: CursorDirection::Left,
+                        },
+                        KeyCode::Right => MatatreeEvent::MoveCursorLogical {
+                            directon: CursorDirection::Right,
+                        },
+                        _ => return,
+                    }
+                } else {
+                    return;
+                }
+            }
+            _ => return,
+        };
+
         self.tree.handle_event(event);
+    }
+
+    fn tree(&self) -> &Tree {
+        self.tree.tree()
     }
 }
 

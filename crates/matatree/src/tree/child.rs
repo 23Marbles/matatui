@@ -16,6 +16,7 @@ pub enum Child {
     Container(ContainerId),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum ChildRef<'a> {
     Atom(&'a Atom),
 

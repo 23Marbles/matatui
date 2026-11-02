@@ -8,6 +8,8 @@ use crate::{
     tree::Tree,
 };
 
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CursoredTree {
     tree: Tree,
 
@@ -17,29 +19,41 @@ pub struct CursoredTree {
 impl CursoredTree {
     pub fn from_tree(tree: Tree) -> Self {
         Self {
-            cursor: Cursor {
-                sequence_id: tree.root_id(),
-                child_index: None,
-            },
+            cursor: Cursor::new(&tree),
             tree,
         }
     }
 }
 
 impl Editor for CursoredTree {
+    type Event = event::Event;
+
     fn layout<'a, E: LayoutEngine>(&'a self) -> MeasurementResult<'a, E> {
         E::layout_sequence(self.tree.root(), Some(&self.cursor))
     }
 
-    fn handle_event(&mut self, event: event::Event) {
-        match event {}
+    fn handle_event(&mut self, event: Self::Event) {
+        match event {
+            event::Event::MoveCursorLogical { directon } => match directon {
+                event::CursorDirection::Left => self.move_left(),
+                event::CursorDirection::Right => self.move_right(),
+            },
+        }
+    }
+
+    fn tree(&self) -> &Tree {
+        &self.tree
     }
 }
 
 pub trait Editor {
+    type Event;
+
     fn layout<'a, E: LayoutEngine>(&'a self) -> MeasurementResult<'a, E>;
 
-    fn handle_event(&mut self, event: event::Event);
+    fn handle_event(&mut self, event: Self::Event);
+
+    fn tree(&self) -> &Tree;
 
     fn render<'a, R: Renderer<E>, E: LayoutEngine>(
         &'a self,

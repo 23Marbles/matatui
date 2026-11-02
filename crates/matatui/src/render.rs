@@ -4,7 +4,7 @@ use matatree::{
     layout::{MeasurementResult, NodeKindRef},
     render::RenderContext,
 };
-use ratatui::{layout::Rect, text::Text, widgets::Widget};
+use ratatui::{layout::Rect, style::Color, text::Text, widgets::Widget};
 
 use crate::layout::RatatuiLayout;
 
@@ -169,7 +169,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                     continue;
                 };
 
-                (cell.fg, cell.bg) = (cell.bg, cell.fg);
+                (cell.fg, cell.bg) = (cell.bg, Color::LightBlue);
             }
         }
     }

@@ -7,7 +7,10 @@ use std::{
 };
 
 use bitflags::bitflags;
-use matatree::tree::{SequenceId, Tree};
+use matatree::{
+    editor::CursoredTree,
+    tree::{SequenceId, Tree},
+};
 use ron::ser::PrettyConfig;
 
 use crate::{command::TreeEdit, tree::draw_tree};
@@ -32,7 +35,7 @@ pub struct Context<'a> {
 
 #[derive(Debug, Default)]
 pub struct DebugApp {
-    pub tree: Tree,
+    pub editor: CursoredTree,
 
     save_path: Option<PathBuf>,
 
@@ -60,10 +63,10 @@ impl DebugApp {
 
         file.read_to_string(&mut buf)?;
 
-        let tree = ron::from_str(&buf)?;
+        let editor = ron::from_str(&buf)?;
 
         Ok(Self {
-            tree,
+            editor,
             atom_buffers: HashMap::new(),
             save_path: None,
             visible_sections: VisibleSections::all(),

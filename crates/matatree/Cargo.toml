@@ -8,6 +8,7 @@ anyhow = "1.0.104"
 num-traits = "0.2.19"
 serde = { version = "1.0.229", optional = true }
 slotmap = "1.1.1"
+unicode-segmentation = "1.13.3"
 
 [features]
 serde = ["dep:serde", "slotmap/serde"]

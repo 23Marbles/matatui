@@ -1,8 +1,8 @@
 use std::{fs, path::PathBuf};
 
 use clap::Parser;
-use crossterm::event;
-use matatree::tree::Tree;
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use matatree::{editor::Editor, tree::Tree};
 use matatui::RatatuiEditor;
 
 #[derive(Debug, clap::Parser)]
@@ -15,14 +15,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let tree: Tree = ron::from_str(&fs::read_to_string(args.load_path)?)?;
 
-    let editor = RatatuiEditor::from_tree(tree);
+    let mut editor = RatatuiEditor::from_tree(tree);
 
     ratatui::run(|terminal| {
         loop {
             terminal.draw(|frame| frame.render_widget(&editor, frame.area()))?;
-            if event::read()?.is_key_press() {
+            let event = event::read()?;
+            if matches!(
+                event,
+                Event::Key(KeyEvent {
+                    code: KeyCode::Esc,
+                    ..
+                })
+            ) {
                 break Ok(());
-            }
+            };
+            editor.handle_event(event);
         }
     })
 }

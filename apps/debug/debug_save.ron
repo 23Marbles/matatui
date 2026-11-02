@@ -12,14 +12,14 @@
             value: Some((
                 parent: None,
                 children: [
-                    Atom(Text("2")),
+                    Atom(Text("2xy")),
                     Atom(Operator('+')),
                     Container((
                         idx: 1,
                         version: 1,
                     )),
                     Atom(Operator('-')),
-                    Atom(Text("5")),
+                    Atom(Text("53.233")),
                 ],
             )),
             version: 1,
@@ -31,7 +31,7 @@
                     version: 1,
                 )),
                 children: [
-                    Atom(Text("x")),
+                    Atom(Text("3.5x")),
                 ],
             )),
             version: 1,
@@ -43,7 +43,7 @@
                     version: 1,
                 )),
                 children: [
-                    Atom(Text("3")),
+                    Atom(Text("23")),
                 ],
             )),
             version: 1,
