@@ -41,10 +41,10 @@ impl Editor for RatatuiEditor {
                 if !key_event.is_release() {
                     match key_event.code {
                         KeyCode::Left => MatatreeEvent::MoveCursorLogical {
-                            directon: CursorDirection::Left,
+                            direction: CursorDirection::Left,
                         },
                         KeyCode::Right => MatatreeEvent::MoveCursorLogical {
-                            directon: CursorDirection::Right,
+                            direction: CursorDirection::Right,
                         },
                         _ => return,
                     }
@@ -72,10 +72,65 @@ impl ratatui::widgets::Widget for &'_ RatatuiEditor {
             x: area.x.saturating_add_signed(self.x_offset),
             ..area
         };
+
+        let clip_area = area.intersection(buf.area);
+        let mut clipped_buf = ratatui::buffer::Buffer::empty(clip_area);
+        for y in clip_area.y..clip_area.bottom() {
+            for x in clip_area.x..clip_area.right() {
+                if let (Some(source), Some(destination)) =
+                    (buf.cell((x, y)), clipped_buf.cell_mut((x, y)))
+                {
+                    *destination = source.clone();
+                }
+            }
+        }
+
         <RatatuiEditor as Editor>::render::<RatatuiRender, RatatuiLayout>(
             self,
-            new_area.intersection(area),
-            buf,
+            new_area,
+            &mut clipped_buf,
         );
+
+        for y in clip_area.y..clip_area.bottom() {
+            for x in clip_area.x..clip_area.right() {
+                if let (Some(source), Some(destination)) =
+                    (clipped_buf.cell((x, y)), buf.cell_mut((x, y)))
+                {
+                    *destination = source.clone();
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use matatree::tree::{Atom, Tree};
+
+    use super::*;
+
+    #[test]
+    fn negative_x_offset_preserves_viewport_clipping() {
+        let mut tree = Tree::new();
+        tree.get_mut_sequence(tree.root_id())
+            .unwrap()
+            .add_atom(Atom::Text("abcdef".into()));
+        let editor = RatatuiEditor {
+            tree: CursoredTree::from_tree(tree),
+            x_offset: -2,
+        };
+        let mut buf = ratatui::buffer::Buffer::empty(Rect::new(0, 0, 10, 5));
+
+        <&RatatuiEditor as ratatui::widgets::Widget>::render(
+            &editor,
+            Rect::new(4, 0, 3, 5),
+            &mut buf,
+        );
+
+        assert_eq!(buf.cell((3, 0)).unwrap().symbol(), " ");
+        assert_eq!(buf.cell((4, 0)).unwrap().symbol(), "b");
+        assert_eq!(buf.cell((5, 0)).unwrap().symbol(), "c");
+        assert_eq!(buf.cell((6, 0)).unwrap().symbol(), "d");
+        assert_eq!(buf.cell((7, 0)).unwrap().symbol(), " ");
     }
 }

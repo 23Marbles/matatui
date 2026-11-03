@@ -19,7 +19,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     ratatui::run(|terminal| {
         loop {
-            terminal.draw(|frame| frame.render_widget(&editor, frame.area()))?;
+            terminal.draw(|frame| {
+                frame.render_widget(
+                    &editor,
+                    frame.area().centered(
+                        ratatui::layout::Constraint::Percentage(50),
+                        ratatui::layout::Constraint::Percentage(80),
+                    ),
+                )
+            })?;
             let event = event::read()?;
             if matches!(
                 event,

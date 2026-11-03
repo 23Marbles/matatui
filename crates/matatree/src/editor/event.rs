@@ -1,5 +1,5 @@
 pub enum Event {
-    MoveCursorLogical { directon: CursorDirection },
+    MoveCursorLogical { direction: CursorDirection },
 }
 
 pub enum CursorDirection {

@@ -53,7 +53,7 @@ impl Editor for CursoredTree {
 
     fn handle_event(&mut self, event: Self::Event) {
         match event {
-            event::Event::MoveCursorLogical { directon } => match directon {
+            event::Event::MoveCursorLogical { direction } => match direction {
                 event::CursorDirection::Left => self.move_left(),
                 event::CursorDirection::Right => self.move_right(),
             },
