@@ -86,7 +86,9 @@ impl LayoutEngine for RatatuiLayout {
                         (NodeKindRef::Text(_), Some(text_idx)) => text_idx as u16,
                         (NodeKindRef::Text(_), None) => 0,
                         (NodeKindRef::Operator(_), _) => {
-                            if let Some(ChildRef::Container(_)) = cursor_idx
+                            if let Some(
+                                ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
+                            ) = cursor_idx
                                 .checked_add(1)
                                 .and_then(|idx| sequence.get_child(idx))
                             {
@@ -96,7 +98,9 @@ impl LayoutEngine for RatatuiLayout {
                             }
                         }
                         (NodeKindRef::Fraction { .. }, _) => {
-                            if let Some(ChildRef::Container(_)) = cursor_idx
+                            if let Some(
+                                ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
+                            ) = cursor_idx
                                 .checked_add(1)
                                 .and_then(|idx| sequence.get_child(idx))
                             {

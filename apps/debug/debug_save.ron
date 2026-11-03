@@ -19,6 +19,7 @@
                             idx: 1,
                             version: 1,
                         )),
+                        Atom(Operator('+')),
                         Atom(Operator('-')),
                         Atom(Text("53.233")),
                     ],
