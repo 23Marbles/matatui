@@ -18,11 +18,8 @@ pub struct RatatuiEditor {
 }
 
 impl RatatuiEditor {
-    pub fn from_tree(tree: Tree) -> Self {
-        Self {
-            tree: CursoredTree::from_tree(tree),
-            x_offset: 0,
-        }
+    pub fn from_tree(tree: CursoredTree) -> Self {
+        Self { tree, x_offset: 0 }
     }
 }
 
@@ -38,7 +35,7 @@ impl Editor for RatatuiEditor {
     fn handle_event(&mut self, event: Self::Event) {
         let event = match event {
             Event::Key(key_event) => {
-                if !key_event.is_press() {
+                if !key_event.is_release() {
                     match key_event.code {
                         KeyCode::Left => MatatreeEvent::MoveCursorLogical {
                             directon: CursorDirection::Left,

@@ -1,77 +1,86 @@
 (
-    root: (
-        idx: 1,
-        version: 1,
-    ),
-    sequences: [
-        (
-            value: None,
-            version: 0,
+    tree: (
+        root: (
+            idx: 1,
+            version: 1,
         ),
-        (
-            value: Some((
-                parent: None,
-                children: [
-                    Atom(Text("2xy")),
-                    Atom(Operator('+')),
-                    Container((
+        sequences: [
+            (
+                value: None,
+                version: 0,
+            ),
+            (
+                value: Some((
+                    parent: None,
+                    children: [
+                        Atom(Text("2xy")),
+                        Atom(Operator('+')),
+                        Container((
+                            idx: 1,
+                            version: 1,
+                        )),
+                        Atom(Operator('-')),
+                        Atom(Text("53.233")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
                         idx: 1,
                         version: 1,
                     )),
-                    Atom(Operator('-')),
-                    Atom(Text("53.233")),
-                ],
-            )),
-            version: 1,
-        ),
-        (
-            value: Some((
-                parent: Some((
-                    idx: 1,
-                    version: 1,
+                    children: [
+                        Atom(Text("3.5x")),
+                    ],
                 )),
-                children: [
-                    Atom(Text("3.5x")),
-                ],
-            )),
-            version: 1,
-        ),
-        (
-            value: Some((
-                parent: Some((
-                    idx: 1,
-                    version: 1,
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 1,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("23")),
+                    ],
                 )),
-                children: [
-                    Atom(Text("23")),
-                ],
-            )),
-            version: 1,
-        ),
-    ],
-    containers: [
-        (
-            value: None,
-            version: 0,
-        ),
-        (
-            value: Some((
-                kind: Fraction(
-                    numerator: (
-                        idx: 2,
+                version: 1,
+            ),
+        ],
+        containers: [
+            (
+                value: None,
+                version: 0,
+            ),
+            (
+                value: Some((
+                    kind: Fraction(
+                        numerator: (
+                            idx: 2,
+                            version: 1,
+                        ),
+                        denominator: (
+                            idx: 3,
+                            version: 1,
+                        ),
+                    ),
+                    parent_id: (
+                        idx: 1,
                         version: 1,
                     ),
-                    denominator: (
-                        idx: 3,
-                        version: 1,
-                    ),
-                ),
-                parent_id: (
-                    idx: 1,
-                    version: 1,
-                ),
-            )),
+                )),
+                version: 1,
+            ),
+        ],
+    ),
+    cursor: (
+        sequence_id: (
+            idx: 2,
             version: 1,
         ),
-    ],
+        child_index: Some((0, Some(3))),
+    ),
 )
