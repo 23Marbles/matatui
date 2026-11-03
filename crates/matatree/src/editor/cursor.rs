@@ -5,77 +5,17 @@ use crate::{
     tree::{Atom, ChildRef, ContainerKind, ContainerRef, SequenceId, SequenceRef, Tree},
 };
 
-fn text_grapheme_count(text: &str) -> usize {
-    text.graphemes(true).count()
-}
-
-#[derive(Debug, Clone, Copy)]
-/// The cursor which edits a `Tree`
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Cursor {
-    sequence_id: SequenceId,
-
-    child_index: Option<(usize, Option<usize>)>,
-}
-
-impl Cursor {
-    pub fn new(tree: &Tree) -> Self {
-        Self {
-            sequence_id: tree.root_id(),
-            child_index: None,
-        }
-    }
-
-    pub fn sequence_id(&self) -> SequenceId {
-        self.sequence_id
-    }
-
-    pub fn child_index(&self) -> Option<(usize, Option<usize>)> {
-        self.child_index
-    }
-}
-
 pub trait CursorControl {
     /// Move the input cursor to the left
     fn move_left(&self, cursor: Cursor) -> Option<Cursor>;
-
     /// Move the input cursor to the right
     fn move_right(&self, cursor: Cursor) -> Option<Cursor>;
 
-    /// Get the rightmost cursor position
-    fn rightmost_cursor(&self) -> Cursor;
-
     /// Get the leftmost cursor position
     fn leftmost_cursor(&self) -> Cursor;
-}
 
-fn get_left_of_container(container: &ContainerRef) -> Cursor {
-    let parent = container.parent().unwrap();
-
-    let (parent_index, _) = parent
-        .children()
-        .into_iter()
-        .enumerate()
-        .find(|(_, child)| {
-            matches!(
-                child,
-                &ChildRef::Container(container_ref) if container_ref.id() == container.id()
-            )
-        })
-        .expect("Parent should have this as a child");
-
-    Cursor {
-        sequence_id: parent.id(),
-        child_index: parent_index.checked_sub(1).map(|idx| {
-            match parent
-                .get_child(idx)
-                .expect("Is before the current index which does exist")
-            {
-                ChildRef::Atom(Atom::Text(text)) => (idx, text_grapheme_count(text).checked_sub(1)),
-                ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)) => (idx, None),
-            }
-        }),
-    }
+    /// Get the rightmost cursor position
+    fn rightmost_cursor(&self) -> Cursor;
 }
 
 impl CursorControl for ContainerRef<'_> {
@@ -99,7 +39,6 @@ impl CursorControl for ContainerRef<'_> {
             }
         }
     }
-
     fn move_right(&self, cursor: Cursor) -> Option<Cursor> {
         let child_id = cursor.sequence_id();
 
@@ -138,22 +77,22 @@ impl CursorControl for ContainerRef<'_> {
         }
     }
 
-    fn rightmost_cursor(&self) -> Cursor {
-        match self.kind() {
-            ContainerKind::Fraction { denominator, .. } => {
-                let sequence = self.tree().get_sequence(*denominator).unwrap();
-
-                sequence.rightmost_cursor()
-            }
-        }
-    }
-
     fn leftmost_cursor(&self) -> Cursor {
         match self.kind() {
             ContainerKind::Fraction { numerator, .. } => {
                 let sequence = self.tree().get_sequence(*numerator).unwrap();
 
                 sequence.leftmost_cursor()
+            }
+        }
+    }
+
+    fn rightmost_cursor(&self) -> Cursor {
+        match self.kind() {
+            ContainerKind::Fraction { denominator, .. } => {
+                let sequence = self.tree().get_sequence(*denominator).unwrap();
+
+                sequence.rightmost_cursor()
             }
         }
     }
@@ -196,7 +135,6 @@ impl CursorControl for SequenceRef<'_> {
 
         Some(cursor)
     }
-
     fn move_right(&self, mut cursor: Cursor) -> Option<Cursor> {
         assert_eq!(cursor.sequence_id, self.id());
 
@@ -253,6 +191,13 @@ impl CursorControl for SequenceRef<'_> {
         }
     }
 
+    fn leftmost_cursor(&self) -> Cursor {
+        Cursor {
+            sequence_id: self.id(),
+            child_index: None,
+        }
+    }
+
     fn rightmost_cursor(&self) -> Cursor {
         let child = self
             .child_count()
@@ -274,12 +219,31 @@ impl CursorControl for SequenceRef<'_> {
             }),
         }
     }
+}
 
-    fn leftmost_cursor(&self) -> Cursor {
-        Cursor {
-            sequence_id: self.id(),
+#[derive(Debug, Clone, Copy)]
+/// The cursor which edits a `Tree`
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Cursor {
+    sequence_id: SequenceId,
+
+    child_index: Option<(usize, Option<usize>)>,
+}
+
+impl Cursor {
+    pub fn new(tree: &Tree) -> Self {
+        Self {
+            sequence_id: tree.root_id(),
             child_index: None,
         }
+    }
+
+    pub fn sequence_id(&self) -> SequenceId {
+        self.sequence_id
+    }
+
+    pub fn child_index(&self) -> Option<(usize, Option<usize>)> {
+        self.child_index
     }
 }
 
@@ -294,7 +258,6 @@ impl CursoredTree {
             self.cursor = c
         };
     }
-
     pub fn move_right(&mut self) {
         if let Some(c) = self
             .tree
@@ -304,6 +267,39 @@ impl CursoredTree {
         {
             self.cursor = c
         };
+    }
+}
+
+fn text_grapheme_count(text: &str) -> usize {
+    text.graphemes(true).count()
+}
+
+fn get_left_of_container(container: &ContainerRef) -> Cursor {
+    let parent = container.parent().unwrap();
+
+    let (parent_index, _) = parent
+        .children()
+        .into_iter()
+        .enumerate()
+        .find(|(_, child)| {
+            matches!(
+                child,
+                &ChildRef::Container(container_ref) if container_ref.id() == container.id()
+            )
+        })
+        .expect("Parent should have this as a child");
+
+    Cursor {
+        sequence_id: parent.id(),
+        child_index: parent_index.checked_sub(1).map(|idx| {
+            match parent
+                .get_child(idx)
+                .expect("Is before the current index which does exist")
+            {
+                ChildRef::Atom(Atom::Text(text)) => (idx, text_grapheme_count(text).checked_sub(1)),
+                ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)) => (idx, None),
+            }
+        }),
     }
 }
 

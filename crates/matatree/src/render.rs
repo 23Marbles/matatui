@@ -7,7 +7,7 @@ use crate::{
 pub trait Renderer<L: LayoutEngine> {
     type Rect;
 
-    // The canvas type which is passed to the rendere to draw on; e.g. &mut ratatui::Buffer
+    // The canvas type which is passed to the renderer to draw on; e.g. &mut ratatui::Buffer
     type Canvas;
 
     fn render_layout(

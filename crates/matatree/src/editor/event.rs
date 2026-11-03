@@ -4,5 +4,6 @@ pub enum Event {
 
 pub enum CursorDirection {
     Left,
+
     Right,
 }

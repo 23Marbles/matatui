@@ -1,6 +1,6 @@
-use matatree::{editor::cursor::Cursor, tree::ContainerRef};
-
 use std::cmp::max;
+
+use matatree::{editor::cursor::Cursor, tree::ContainerRef};
 
 use matatree::{layout::MeasurementResult, tree::SequenceId};
 

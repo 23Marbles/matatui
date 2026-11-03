@@ -1,11 +1,11 @@
+mod atom;
+mod fraction;
+
 use std::cmp::max;
 
 use matatree::{editor::cursor::Cursor, layout::*, tree::*};
 
 use crate::layout::atom::layout_atom;
-
-mod atom;
-mod fraction;
 
 pub struct RatatuiLayout;
 
@@ -38,8 +38,6 @@ impl LayoutEngine for RatatuiLayout {
             ascent: 1,
             descent: 0,
         };
-
-        // TODO fraction slections not being rendered with the rest
 
         let results = sequence
             .children()
@@ -141,7 +139,6 @@ impl LayoutEngine for RatatuiLayout {
             cursor_pos,
         }
     }
-
     fn layout_container<'a>(
         container: ContainerRef<'a>,
         cursor: Option<&Cursor>,

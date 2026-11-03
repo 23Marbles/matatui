@@ -59,24 +59,6 @@ pub struct ContainerRef<'a> {
     container: &'a Container,
 }
 
-impl Clone for ContainerRef<'_> {
-    fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            tree: self.tree,
-            container: self.container,
-        }
-    }
-}
-
-impl PartialEq for ContainerRef<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-            && self.tree.root_id() == other.tree.root_id()
-            && self.container == other.container
-    }
-}
-
 impl<'a> ContainerRef<'a> {
     pub fn id(&self) -> ContainerId {
         self.id
@@ -99,6 +81,24 @@ impl<'a> ContainerRef<'a> {
     }
 }
 
+impl Clone for ContainerRef<'_> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            tree: self.tree,
+            container: self.container,
+        }
+    }
+}
+
+impl PartialEq for ContainerRef<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.tree.root_id() == other.tree.root_id()
+            && self.container == other.container
+    }
+}
+
 impl Deref for ContainerRef<'_> {
     type Target = Container;
 
@@ -108,7 +108,7 @@ impl Deref for ContainerRef<'_> {
 }
 
 pub struct ContainerMut<'a> {
-    /// On construction this is guarunteed to exist
+    /// On construction this is guaranteed to exist
     id: ContainerId,
 
     /// Mutating tree must not allow `Self::id` to become invalid
@@ -177,7 +177,7 @@ impl<'a> ContainerMut<'a> {
 impl DerefMut for ContainerMut<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.tree.containers.get_mut(self.id)
-            .expect("On construction `Self::id` is guarunteed to be valid and is not invalidated by mutations on `Self::tree`")
+            .expect("On construction `Self::id` is guaranteed to be valid and is not invalidated by mutations on `Self::tree`")
     }
 }
 
@@ -186,7 +186,7 @@ impl Deref for ContainerMut<'_> {
 
     fn deref(&self) -> &Self::Target {
         self.tree.containers.get(self.id)
-            .expect("On construction `Self::id` is guarunteed to be valid and is not invalidated by mutations on `Self::tree`")
+            .expect("On construction `Self::id` is guaranteed to be valid and is not invalidated by mutations on `Self::tree`")
     }
 }
 #[derive(Debug, Clone)]

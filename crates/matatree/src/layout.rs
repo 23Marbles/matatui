@@ -9,7 +9,7 @@ use crate::{
 /// The measurement measures from the baseline of the text.
 pub trait FontLayout<U: Num> {
     /// Measure the size of an &str. This comes with a width, ascent and descent
-    /// for accurate positioing around a baseline.
+    /// for accurate positioning around a baseline.
     fn measure_str(&self, s: &str) -> Measurement<U>;
 }
 
@@ -19,7 +19,7 @@ pub trait LayoutEngine: Sized {
     /// f64 for guis etc.
     type Unit: Num;
 
-    /// The algotithm which will be used in order to measure the text.
+    /// The algorithm which will be used in order to measure the text.
     type FontLayout: FontLayout<Self::Unit>;
 
     fn layout_sequence<'a>(
@@ -42,6 +42,7 @@ pub enum NodeKindRef<'a, L: LayoutEngine> {
 
     Fraction {
         numerator: Box<PositionedNodeRef<'a, L>>,
+
         denominator: Box<PositionedNodeRef<'a, L>>,
     },
 }
@@ -70,11 +71,11 @@ impl<U: Num + Clone> Measurement<U> {
 pub struct MeasurementResult<'a, L: LayoutEngine> {
     pub kind: NodeKindRef<'a, L>,
 
-    pub measurement: Measurement<L::Unit>,
-
     /// The cursor position (if any). Is stored as (x, y, height).
     /// Is a difference from the current measurement's rect's upper left
     pub cursor_pos: Option<(L::Unit, L::Unit, L::Unit)>,
+
+    pub measurement: Measurement<L::Unit>,
 }
 
 pub struct PositionedNodeRef<'a, L: LayoutEngine> {

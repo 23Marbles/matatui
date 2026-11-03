@@ -102,7 +102,7 @@ impl DebugApp {
                 {
                     matatree::tree::ChildMut::Atom(a) => *a = atom,
                     matatree::tree::ChildMut::Container(_) => {
-                        log::error!("Tried to replace an atom but found a contianer")
+                        log::error!("Tried to replace an atom but found a container")
                     }
                 };
             }
