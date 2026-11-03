@@ -5,7 +5,10 @@ use matatree::{
     },
     tree::Tree,
 };
-use ratatui::crossterm::event::{Event, KeyCode};
+use ratatui::{
+    crossterm::event::{Event, KeyCode},
+    layout::Rect,
+};
 
 use crate::{layout::RatatuiLayout, render::RatatuiRender};
 
@@ -14,7 +17,7 @@ pub(crate) mod render;
 
 pub struct RatatuiEditor {
     tree: matatree::editor::CursoredTree,
-    x_offset: u16,
+    pub x_offset: i16,
 }
 
 impl RatatuiEditor {
@@ -65,6 +68,14 @@ impl ratatui::widgets::Widget for &'_ RatatuiEditor {
     where
         Self: Sized,
     {
-        <RatatuiEditor as Editor>::render::<RatatuiRender, RatatuiLayout>(self, area, buf);
+        let new_area = Rect {
+            x: area.x.saturating_add_signed(self.x_offset),
+            ..area
+        };
+        <RatatuiEditor as Editor>::render::<RatatuiRender, RatatuiLayout>(
+            self,
+            new_area.intersection(area),
+            buf,
+        );
     }
 }

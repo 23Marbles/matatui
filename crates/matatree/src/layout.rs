@@ -10,7 +10,7 @@ use crate::{
 pub trait FontLayout<U: Num> {
     /// Measure the size of an &str. This comes with a width, ascent and descent
     /// for accurate positioing around a baseline.
-    fn measure_str(s: &str) -> Measurement<U>;
+    fn measure_str(&self, s: &str) -> Measurement<U>;
 }
 
 /// A trait that recursively lays out the elements of a tree as `Measurement`s

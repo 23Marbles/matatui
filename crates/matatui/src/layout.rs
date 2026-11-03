@@ -10,7 +10,7 @@ mod fraction;
 pub struct RatatuiLayout;
 
 impl FontLayout<u16> for RatatuiLayout {
-    fn measure_str(s: &str) -> Measurement<u16> {
+    fn measure_str(&self, s: &str) -> Measurement<u16> {
         Measurement {
             width: <str as unicode_segmentation::UnicodeSegmentation>::graphemes(s, true).count()
                 as u16,
