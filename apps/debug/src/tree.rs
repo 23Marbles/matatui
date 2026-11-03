@@ -35,6 +35,7 @@ pub fn debug_sequence(
     atom_buffers: &mut HashMap<(SequenceId, usize), String>,
 ) {
     let mut header_edits = Vec::new();
+    let mut remove_container = false;
 
     CollapsingHeader::custom(
         ui,
@@ -93,6 +94,8 @@ pub fn debug_sequence(
                                         }
 
                                         if ui.small_button("×").clicked() {
+                                            atom_buffers.remove(&key);
+
                                             edits.push(TreeEdit::DeleteChild {
                                                 index,
                                                 parent: sequence.id(),
@@ -128,6 +131,8 @@ pub fn debug_sequence(
                                         }
 
                                         if ui.small_button("×").clicked() {
+                                            atom_buffers.remove(&key);
+
                                             edits.push(TreeEdit::DeleteChild {
                                                 index,
                                                 parent: sequence.id(),
@@ -178,12 +183,15 @@ pub fn debug_container(
 
     let mut header_edits = Vec::new();
 
+    let mut remove_container = false;
+
     CollapsingHeader::custom(
         ui,
         container.id(),
         |ui| {
             ui.label(name);
             if ui.small_button("×").clicked() {
+                remove_container = true;
                 header_edits.push(TreeEdit::DeleteContainer { id: container.id() });
             }
         },
@@ -193,6 +201,49 @@ pub fn debug_container(
             }
         },
     );
+
+    if remove_container {
+        fn remove_atom_buffers(
+            sequence: SequenceRef,
+            atom_buffers: &mut HashMap<(SequenceId, usize), String>,
+        ) {
+            let id = sequence.id();
+
+            for (idx, child) in sequence.children().into_iter().enumerate() {
+                match child {
+                    ChildRef::Atom(_) => {
+                        atom_buffers.remove(&(id, idx));
+                    }
+                    ChildRef::Container(container_ref) => {
+                        remove_containers_atom_buffers(container_ref, atom_buffers)
+                    }
+                }
+            }
+        }
+
+        fn remove_containers_atom_buffers(
+            container_ref: ContainerRef,
+            atom_buffers: &mut HashMap<(SequenceId, usize), String>,
+        ) {
+            match container_ref.kind() {
+                matatree::tree::ContainerKind::Fraction {
+                    numerator,
+                    denominator,
+                } => {
+                    remove_atom_buffers(
+                        container_ref.tree().get_sequence(*numerator).unwrap(),
+                        atom_buffers,
+                    );
+                    remove_atom_buffers(
+                        container_ref.tree().get_sequence(*denominator).unwrap(),
+                        atom_buffers,
+                    );
+                }
+            }
+        }
+
+        remove_containers_atom_buffers(container, atom_buffers);
+    }
 
     edits.extend(header_edits);
 }
