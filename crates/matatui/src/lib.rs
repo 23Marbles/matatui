@@ -51,6 +51,7 @@ impl Editor for RatatuiEditor {
                         KeyCode::Right => MatatreeEvent::MoveCursorLogical {
                             direction: CursorDirection::Right,
                         },
+                        KeyCode::Backspace => MatatreeEvent::Backspace,
                         _ => return,
                     }
                 } else {

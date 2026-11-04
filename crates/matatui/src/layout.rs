@@ -135,7 +135,7 @@ impl LayoutEngine for RatatuiLayout {
             current_x_pos += res.measurement.width;
         }
 
-        measurement.width = current_x_pos;
+        measurement.width = max(current_x_pos, 1);
 
         MeasurementResult {
             kind: NodeKindRef::Sequence(positioned_children),

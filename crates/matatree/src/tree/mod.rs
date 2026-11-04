@@ -44,9 +44,12 @@ impl Tree {
         self.root
     }
 
-    #[must_use]
     pub fn clear_sequence(&mut self, id: SequenceId) -> Option<OwnedSequence> {
         Some(self.get_mut_sequence(id)?.clear())
+    }
+
+    pub fn delete_container(&mut self, id: ContainerId) -> Option<OwnedContainer> {
+        Some(self.get_mut_container(id)?.delete())
     }
 
     #[inline(always)]

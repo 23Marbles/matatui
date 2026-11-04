@@ -1,5 +1,33 @@
 use super::*;
 
+#[must_use]
+pub(super) fn join_text_children(children: &mut Vec<Child>, join_seam: usize) -> Option<usize> {
+    if let Some(prev) = join_seam
+        .checked_sub(1)
+        .and_then(|index| children.get(index))
+        && let Some(after) = children.get(join_seam)
+    {
+        if matches!(prev, Child::Atom(Atom::Text(_))) && matches!(after, Child::Atom(Atom::Text(_)))
+        {
+            let Child::Atom(Atom::Text(after_text)) = children.remove(join_seam) else {
+                unreachable!("Already checked")
+            };
+
+            let Some(Child::Atom(Atom::Text(prev_text))) = children.get_mut(join_seam - 1) else {
+                unreachable!("Already checked")
+            };
+
+            let res = Some(prev_text.len());
+
+            prev_text.push_str(&after_text);
+
+            return res;
+        }
+    }
+
+    None
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Atom {

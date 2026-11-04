@@ -56,6 +56,10 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                 }
             }
             NodeKindRef::Sequence(positioned_node_refs) => {
+                if positioned_node_refs.is_empty() {
+                    Text::raw("░").render(area, buf);
+                }
+
                 for node_ref in positioned_node_refs {
                     let (Some(x), Some(y)) = (
                         area.x.checked_add(node_ref.x),

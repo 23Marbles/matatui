@@ -238,6 +238,16 @@ impl Cursor {
         }
     }
 
+    pub(crate) fn new_raw(
+        sequence_id: SequenceId,
+        child_index: Option<(usize, Option<usize>)>,
+    ) -> Self {
+        Self {
+            sequence_id,
+            child_index,
+        }
+    }
+
     pub fn sequence_id(&self) -> SequenceId {
         self.sequence_id
     }

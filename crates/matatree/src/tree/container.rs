@@ -1,5 +1,10 @@
 use std::ops::{Deref, DerefMut};
 
+use crate::editor::{
+    cursor::Cursor,
+    event::{self},
+};
+
 use super::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -122,6 +127,10 @@ impl<'a> ContainerMut<'a> {
             .then_some(ContainerMut { id, tree })
     }
 
+    pub fn as_ref(&self) -> ContainerRef<'_> {
+        self.tree.get_container(self.id).unwrap()
+    }
+
     pub fn tree(&self) -> &Tree {
         self.tree
     }
@@ -169,8 +178,135 @@ impl<'a> ContainerMut<'a> {
     pub fn into_tree_mut(self) -> &'a mut Tree {
         self.tree
     }
-    pub fn into_parent_mut(self) -> Option<SequenceMut<'a>> {
-        self.tree.get_mut_sequence(self.parent_id())
+    pub fn into_parent_mut(self) -> SequenceMut<'a> {
+        self.tree.get_mut_sequence(self.parent_id()).unwrap()
+    }
+}
+
+impl ContainerMut<'_> {
+    pub fn handle_event(self, event: event::Event, cursor: &mut Cursor) -> Option<event::Event> {
+        match event {
+            event::Event::MoveCursorLogical { .. } => {
+                unimplemented!("Should be handled by the editor")
+            }
+            event::Event::Backspace => match self.kind {
+                ContainerKind::Fraction {
+                    numerator,
+                    denominator,
+                } => {
+                    if cursor.child_index() == None
+                        && (cursor.sequence_id() == numerator
+                            || cursor.sequence_id() == denominator)
+                    {
+                        let numerator_children =
+                            self.tree.sequences.remove(numerator).unwrap().children;
+
+                        let num_len = numerator_children.len();
+
+                        let denominator_children =
+                            self.tree.sequences.remove(denominator).unwrap().children;
+
+                        let denom_len = denominator_children.len();
+
+                        let id = self.id;
+
+                        let mut parent = self.into_parent_mut();
+
+                        let parent_id = parent.id();
+
+                        let children = &mut parent.children;
+
+                        let parent_idx = children
+                            .iter()
+                            .enumerate()
+                            .find(|(_, child)| match child {
+                                Child::Atom(_) => false,
+                                Child::Container(container_id) => *container_id == id,
+                            })
+                            .unwrap()
+                            .0;
+
+                        let _ = children.splice(
+                            parent_idx..=parent_idx,
+                            numerator_children
+                                .into_iter()
+                                .chain(denominator_children.into_iter()),
+                        );
+
+                        if num_len != 0 && denom_len != 0 {
+                            let _ = join_text_children(children, parent_idx + num_len + denom_len);
+                        };
+
+                        let before_denom_text_pos = if num_len != 0 {
+                            join_text_children(children, parent_idx + num_len)
+                        } else {
+                            None
+                        };
+
+                        let before_num_text_pos = join_text_children(children, parent_idx);
+
+                        *cursor = Cursor::new_raw(
+                            parent_id,
+                            match (
+                                before_num_text_pos,
+                                cursor.sequence_id() == numerator,
+                                before_denom_text_pos,
+                                cursor.sequence_id() == denominator,
+                            ) {
+                                (_, true, _, true) => {
+                                    unreachable!("Both sequences cannot be the same")
+                                }
+                                (_, false, _, false) => {
+                                    unreachable!("At least one of the sequences must be a child")
+                                }
+                                (text_idx_opt, true, _, false) => {
+                                    parent_idx.checked_sub(1).map(|idx| {
+                                        (
+                                            idx,
+                                            text_idx_opt.or(match &children[idx] {
+                                                Child::Atom(Atom::Text(text)) => {
+                                                    text.len().checked_sub(1)
+                                                }
+                                                Child::Container(_)
+                                                | Child::Atom(Atom::Operator(_)) => None,
+                                            }),
+                                        )
+                                    })
+                                }
+                                (_, false, text_idx_opt, true) => {
+                                    let parent_idx = parent_idx + num_len;
+
+                                    parent_idx
+                                        .checked_sub(if before_denom_text_pos.is_some() {
+                                            2
+                                        } else {
+                                            1
+                                        })
+                                        .map(|idx| {
+                                            (
+                                                idx,
+                                                text_idx_opt.or(match &children[idx] {
+                                                    Child::Atom(Atom::Text(text)) => {
+                                                        text.len().checked_sub(1)
+                                                    }
+                                                    Child::Container(_)
+                                                    | Child::Atom(Atom::Operator(_)) => None,
+                                                }),
+                                            )
+                                        })
+                                }
+                            },
+                        );
+
+                        parent.into_tree_mut().containers.remove(id);
+
+                        None
+                    } else {
+                        Some(event::Event::Backspace)
+                    }
+                }
+            },
+        }
     }
 }
 

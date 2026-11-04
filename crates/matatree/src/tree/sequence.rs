@@ -1,9 +1,67 @@
 use std::{
     array::from_fn,
     ops::{Deref, DerefMut},
+    range::Range,
+};
+
+use crate::editor::{
+    cursor::{Cursor, CursorControl},
+    event::{self},
 };
 
 use super::*;
+
+impl Tree {
+    pub fn drain_children(
+        &mut self,
+        src: SequenceId,
+        range: impl Into<Range<usize>>,
+    ) -> Option<Vec<Child>> {
+        let src = self.sequences.get_mut(src)?;
+
+        let range = range.into();
+
+        if !(0..src.children.len()).contains(&range.start)
+            || !(0..src.children.len()).contains(&range.end)
+        {
+            return None;
+        }
+
+        Some(src.children.drain(range).collect::<Vec<_>>())
+    }
+
+    pub fn move_children(
+        &mut self,
+        src: SequenceId,
+        src_range: impl Into<Range<usize>>,
+        dst: SequenceId,
+        dest_index: usize,
+    ) {
+        assert!(
+            self.sequences
+                .get(src)
+                .map_or(false, |seq| seq.children.len() <= dest_index)
+        );
+
+        let mut moved_children = self.drain_children(src, src_range).unwrap();
+
+        for child in moved_children.iter_mut() {
+            match child {
+                Child::Atom(_) => (),
+                Child::Container(container_id) => {
+                    let container = self.containers.get_mut(*container_id).unwrap();
+                    container.parent_id = dst
+                }
+            }
+        }
+
+        self.sequences
+            .get_mut(dst)
+            .unwrap()
+            .children
+            .splice(dest_index..dest_index, moved_children);
+    }
+}
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -162,6 +220,10 @@ impl<'a> SequenceMut<'a> {
         self.tree
     }
 
+    pub fn as_ref(&self) -> SequenceRef<'_> {
+        self.tree.get_sequence(self.id).unwrap()
+    }
+
     pub fn clear(&mut self) -> OwnedSequence {
         let mut owned = Vec::new();
 
@@ -226,6 +288,57 @@ impl<'a> SequenceMut<'a> {
     }
     pub fn into_parent_mut(self) -> Option<ContainerMut<'a>> {
         self.tree.get_mut_container(self.parent_id()?)
+    }
+
+    pub fn id(&self) -> SequenceId {
+        self.id
+    }
+}
+
+impl SequenceMut<'_> {
+    pub fn handle_event(&mut self, event: event::Event, cursor: &mut Cursor) {
+        match event {
+            event::Event::MoveCursorLogical { .. } => {
+                unimplemented!("Should be handled by the editor")
+            }
+            event::Event::Backspace => {
+                let Some((child_idx, text_idx)) = cursor.child_index() else {
+                    return;
+                };
+
+                if let Some(new_cursor) = self.as_ref().move_left(*cursor) {
+                    *cursor = new_cursor
+                }
+
+                let remove_child = match self.get_child_mut(child_idx).unwrap() {
+                    ChildMut::Atom(atom) => match atom {
+                        Atom::Text(text) => {
+                            let text_idx = text_idx.unwrap();
+
+                            text.remove(text_idx);
+
+                            text.is_empty()
+                        }
+                        Atom::Operator(_) => true,
+                    },
+                    ChildMut::Container(Container {
+                        kind: ContainerKind::Fraction { .. },
+                        ..
+                    }) => false,
+                };
+
+                if remove_child {
+                    match self.children.remove(child_idx) {
+                        Child::Atom(_) => {}
+                        Child::Container(container_id) => {
+                            let _ = self.tree.delete_container(container_id).unwrap();
+                        }
+                    }
+                }
+
+                let _ = join_text_children(&mut self.children, child_idx);
+            }
+        }
     }
 }
 
