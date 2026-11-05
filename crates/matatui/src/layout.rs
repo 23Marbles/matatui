@@ -76,6 +76,10 @@ impl LayoutEngine for RatatuiLayout {
         let mut positioned_children = Vec::with_capacity(results.len());
         let mut current_x_pos: u16 = 0;
 
+        if results.first().is_some_and(|MeasurementResult { kind,.. }| matches!(kind, NodeKindRef::Fraction { .. })) {
+            current_x_pos += 1;
+        }
+
         for (idx, res) in results.into_iter().enumerate() {
             if idx > 0 {
                 current_x_pos += 1;
