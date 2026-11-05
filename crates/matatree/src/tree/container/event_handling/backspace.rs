@@ -52,7 +52,7 @@ pub(super) fn handle(container: ContainerMut<'_>, cursor: &mut Cursor) -> Option
             .chain(denominator_children.into_iter()),
     );
 
-    if num_len != 0 && denom_len != 0 {
+    if denom_len != 0 {
         let r = join_text_children(children, parent_idx + num_len + denom_len);
         log::debug!("at_end {r:?}")
     };
