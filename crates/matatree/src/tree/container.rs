@@ -234,7 +234,8 @@ impl ContainerMut<'_> {
                         );
 
                         if num_len != 0 && denom_len != 0 {
-                            let _ = join_text_children(children, parent_idx + num_len + denom_len);
+                            let r = join_text_children(children, parent_idx + num_len + denom_len);
+                            log::debug!("at_end {r:?}")
                         };
 
                         let before_denom_text_pos = if num_len != 0 {
@@ -244,6 +245,9 @@ impl ContainerMut<'_> {
                         };
 
                         let before_num_text_pos = join_text_children(children, parent_idx);
+
+                        log::debug!("before_denom {before_denom_text_pos:?}");
+                        log::debug!("before_num {before_num_text_pos:?}");
 
                         *cursor = Cursor::new_raw(
                             parent_id,
@@ -259,39 +263,50 @@ impl ContainerMut<'_> {
                                 (_, false, _, false) => {
                                     unreachable!("At least one of the sequences must be a child")
                                 }
-                                (text_idx_opt, true, _, false) => {
-                                    parent_idx.checked_sub(1).map(|idx| {
+                                (text_idx_opt, true, _, false) => parent_idx
+                                    .checked_sub(if before_num_text_pos.is_some() { 1 } else { 0 })
+                                    .map(|idx| {
                                         (
                                             idx,
-                                            text_idx_opt.or(match &children[idx] {
-                                                Child::Atom(Atom::Text(text)) => {
-                                                    text.len().checked_sub(1)
-                                                }
-                                                Child::Container(_)
-                                                | Child::Atom(Atom::Operator(_)) => None,
-                                            }),
-                                        )
-                                    })
-                                }
-                                (_, false, text_idx_opt, true) => {
-                                    let parent_idx = parent_idx + num_len;
-
-                                    parent_idx
-                                        .checked_sub(if before_denom_text_pos.is_some() {
-                                            2
-                                        } else {
-                                            1
-                                        })
-                                        .map(|idx| {
-                                            (
-                                                idx,
-                                                text_idx_opt.or(match &children[idx] {
+                                            text_idx_opt.and_then(|idx| idx.checked_sub(1)).or(
+                                                match &children[idx] {
                                                     Child::Atom(Atom::Text(text)) => {
                                                         text.len().checked_sub(1)
                                                     }
                                                     Child::Container(_)
                                                     | Child::Atom(Atom::Operator(_)) => None,
-                                                }),
+                                                },
+                                            ),
+                                        )
+                                    }),
+                                (other_text_idx_opt, false, text_idx_opt, true) => {
+                                    let parent_idx = parent_idx + num_len;
+
+                                    parent_idx
+                                        .checked_sub(if before_denom_text_pos.is_some() {
+                                            if before_num_text_pos.is_some() { 2 } else { 1 }
+                                        } else {
+                                            0
+                                        })
+                                        .map(|idx| {
+                                            (
+                                                idx,
+                                                text_idx_opt
+                                                    .map(|idx| {
+                                                        if let Some(i) = other_text_idx_opt {
+                                                            idx + i
+                                                        } else {
+                                                            idx
+                                                        }
+                                                    })
+                                                    .and_then(|idx| idx.checked_sub(1))
+                                                    .or(match &children[idx] {
+                                                        Child::Atom(Atom::Text(text)) => {
+                                                            text.len().checked_sub(1)
+                                                        }
+                                                        Child::Container(_)
+                                                        | Child::Atom(Atom::Operator(_)) => None,
+                                                    }),
                                             )
                                         })
                                 }
