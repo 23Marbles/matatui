@@ -1,5 +1,8 @@
 mod cursor;
 
+#[cfg(test)]
+mod tests;
+
 use crate::editor::{cursor::Cursor, event};
 
 use super::super::*;
