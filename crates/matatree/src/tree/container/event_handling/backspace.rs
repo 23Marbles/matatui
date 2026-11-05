@@ -13,26 +13,42 @@ pub(super) fn handle(container: ContainerMut<'_>, cursor: &mut Cursor) -> Option
         denominator,
     } = container.kind;
 
+    let parent_id = container.parent_id;
+
     if cursor.child_index() != None
         || (cursor.sequence_id() != numerator && cursor.sequence_id() != denominator)
     {
         return Some(event::Event::Backspace);
     }
 
-    let numerator_children = container.tree.sequences.remove(numerator).unwrap().children;
+    let mut numerator_children = container.tree.sequences.remove(numerator).unwrap().children;
     let num_len = numerator_children.len();
 
-    let denominator_children = container
+    for child in numerator_children.iter_mut() {
+        match child {
+            Child::Atom(_) => (),
+            Child::Container(container_id) => container.tree.get_mut_container(*container_id).unwrap().parent_id = parent_id,
+        }
+    }
+
+    let mut denominator_children = container
         .tree
         .sequences
         .remove(denominator)
         .unwrap()
         .children;
     let denom_len = denominator_children.len();
+
+    for child in denominator_children.iter_mut() {
+        match child {
+            Child::Atom(_) => (),
+            Child::Container(container_id) => container.tree.get_mut_container(*container_id).unwrap().parent_id = parent_id,
+        }
+    }
+
     let id = container.id;
 
     let mut parent = container.into_parent_mut();
-    let parent_id = parent.id();
     let children = &mut parent.children;
 
     let parent_idx = children
