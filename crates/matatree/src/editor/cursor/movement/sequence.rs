@@ -10,7 +10,6 @@ impl CursorControl for SequenceRef<'_> {
         let mut move_cursor_to_prev_child = false;
 
         match &mut cursor.child_index {
-            Some((0, None | Some(0))) => cursor.child_index = None,
             Some((_, Some(0))) => move_cursor_to_prev_child = true,
             Some((_, Some(text_index))) => *text_index -= 1,
             Some((child_index, None)) => match self.get_child(*child_index).unwrap() {
@@ -22,6 +21,10 @@ impl CursorControl for SequenceRef<'_> {
                 cursor = parent.move_left(cursor)?;
             }
         };
+
+        if move_cursor_to_prev_child && cursor.child_index.is_some_and(|(i, _)| i == 0) {
+            return Some(Cursor { child_index: None, ..cursor });
+        }
 
         if let Some((idx, text_idx)) = move_cursor_to_prev_child
             .then(|| cursor.child_index.as_mut())
