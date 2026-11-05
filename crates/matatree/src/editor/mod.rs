@@ -1,6 +1,9 @@
 pub mod cursor;
 pub mod event;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     editor::cursor::Cursor,
     layout::{LayoutEngine, MeasurementResult},
