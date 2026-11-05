@@ -11,6 +11,17 @@ struct Args {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::builder()
+        .filter(Some("matatree::tree::container"), log::LevelFilter::Debug)
+        .target(env_logger::Target::Pipe(Box::new(
+            fs::OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .create(true)
+                .open("./ratatui_showcase_log")?,
+        )))
+        .init();
+
     let args = Args::parse();
 
     let tree: CursoredTree = ron::from_str(&fs::read_to_string(args.load_path)?)?;

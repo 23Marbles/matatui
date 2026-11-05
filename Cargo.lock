@@ -2395,6 +2395,7 @@ name = "matatree"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "log",
  "num-traits",
  "serde",
  "slotmap",
@@ -3641,6 +3642,8 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "crossterm",
+ "env_logger",
+ "log",
  "matatree",
  "matatui",
  "ratatui",
