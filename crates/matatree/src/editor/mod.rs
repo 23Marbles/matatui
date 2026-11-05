@@ -1,11 +1,14 @@
 pub mod cursor;
 pub mod event;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     editor::cursor::Cursor,
     layout::{LayoutEngine, MeasurementResult},
     render::{RenderContext, Renderer},
-    tree::Tree,
+    tree::{SequenceMut, SequenceRef, Tree},
 };
 
 pub trait Editor {
@@ -33,6 +36,7 @@ pub trait Editor {
 
     fn handle_event(&mut self, event: Self::Event);
 }
+
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CursoredTree {
@@ -44,6 +48,16 @@ pub struct CursoredTree {
 impl CursoredTree {
     pub fn cursor(&self) -> Cursor {
         self.cursor
+    }
+
+    pub fn sequence_at_cursor<'a>(&'a self) -> SequenceRef<'a> {
+        self.tree.get_sequence(self.cursor.sequence_id()).unwrap()
+    }
+
+    pub fn mut_sequence_at_cursor<'a>(&'a mut self) -> SequenceMut<'a> {
+        self.tree
+            .get_mut_sequence(self.cursor.sequence_id())
+            .unwrap()
     }
 
     pub fn tree_mut(&mut self) -> &mut Tree {
@@ -86,6 +100,22 @@ impl Editor for CursoredTree {
                 event::CursorDirection::Left => self.move_left(),
                 event::CursorDirection::Right => self.move_right(),
             },
+            event => {
+                let (tree, cursor) = (&mut self.tree, &mut self.cursor);
+                let sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
+
+                let event = if let Some(container) = sequence.into_parent_mut() {
+                    container.handle_event(event, cursor)
+                } else {
+                    Some(event)
+                };
+
+                if let Some(event) = event {
+                    let mut sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
+
+                    sequence.handle_event(event, cursor);
+                }
+            }
         }
     }
 }
