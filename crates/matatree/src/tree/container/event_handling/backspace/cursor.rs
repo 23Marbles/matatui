@@ -1,6 +1,22 @@
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::editor::cursor::Cursor;
 
 use super::super::super::super::*;
+
+fn cursor_text_index(byte_offset: Option<usize>, child: &Child) -> Option<usize> {
+    match child {
+        Child::Atom(Atom::Text(text)) => match byte_offset {
+            Some(byte_offset) => text
+                .grapheme_indices(true)
+                .take_while(|(index, _)| *index < byte_offset)
+                .count()
+                .checked_sub(1),
+            None => text.graphemes(true).count().checked_sub(1),
+        },
+        Child::Container(_) | Child::Atom(Atom::Operator(_)) => None,
+    }
+}
 
 pub(super) fn restore(
     cursor: &mut Cursor,
@@ -24,45 +40,25 @@ pub(super) fn restore(
             (_, true, _, true) => unreachable!("Both sequences cannot be the same"),
             (_, false, _, false) => unreachable!("At least one of the sequences must be a child"),
             (text_idx_opt, true, _, false) => parent_idx
-                .checked_sub(if before_num_text_pos.is_some() { 1 } else { 1 })
-                .map(|idx| {
-                    (
-                        idx,
-                        text_idx_opt
-                            .and_then(|idx| idx.checked_sub(1))
-                            .or(match &children[idx] {
-                                Child::Atom(Atom::Text(text)) => text.len().checked_sub(1),
-                                Child::Container(_) | Child::Atom(Atom::Operator(_)) => None,
-                            }),
-                    )
-                }),
+                .checked_sub(1)
+                .map(|idx| (idx, cursor_text_index(text_idx_opt, &children[idx]))),
             (other_text_idx_opt, false, text_idx_opt, true) => {
-                let parent_idx = parent_idx + num_len;
-
-                parent_idx
-                    .checked_sub(if before_denom_text_pos.is_some() {
-                        if before_num_text_pos.is_some() { 2 } else { 1 }
-                    } else {
-                        0
-                    })
-                    .map(|idx| {
-                        (
-                            idx,
-                            text_idx_opt
-                                .map(|idx| {
-                                    if let Some(i) = other_text_idx_opt {
-                                        idx + i
-                                    } else {
-                                        idx
-                                    }
-                                })
-                                .and_then(|idx| idx.checked_sub(1))
-                                .or(match &children[idx] {
-                                    Child::Atom(Atom::Text(text)) => text.len().checked_sub(1),
-                                    Child::Container(_) | Child::Atom(Atom::Operator(_)) => None,
-                                }),
-                        )
-                    })
+                if num_len != 0 {
+                    let idx = parent_idx + num_len - 1 - usize::from(other_text_idx_opt.is_some());
+                    let text_offset = text_idx_opt.map(|text_idx| {
+                        text_idx
+                            + if num_len == 1 {
+                                other_text_idx_opt.unwrap_or(0)
+                            } else {
+                                0
+                            }
+                    });
+                    Some((idx, cursor_text_index(text_offset, &children[idx])))
+                } else {
+                    parent_idx
+                        .checked_sub(1)
+                        .map(|idx| (idx, cursor_text_index(other_text_idx_opt, &children[idx])))
+                }
             }
         },
     );

@@ -3,24 +3,6 @@ use std::ops::Range;
 use super::*;
 
 impl Tree {
-    pub fn drain_children(
-        &mut self,
-        src: SequenceId,
-        range: impl Into<Range<usize>>,
-    ) -> Option<Vec<Child>> {
-        let src = self.sequences.get_mut(src)?;
-        let range = range.into();
-
-        if range.start > src.children.len()
-            || range.end > src.children.len()
-            || range.start > range.end
-        {
-            return None;
-        }
-
-        Some(src.children.drain(range).collect())
-    }
-
     pub fn move_children(
         &mut self,
         src: SequenceId,
@@ -34,7 +16,13 @@ impl Tree {
                 .map_or(false, |seq| dest_index <= seq.children.len())
         );
 
-        let mut moved_children = self.drain_children(src, src_range).unwrap();
+        let mut moved_children: Vec<_> = self
+            .sequences
+            .get_mut(src)
+            .unwrap()
+            .children
+            .drain(src_range.into())
+            .collect();
 
         for child in moved_children.iter_mut() {
             if let Child::Container(container_id) = child {

@@ -20,6 +20,7 @@
                             idx: 1,
                             version: 1,
                         )),
+                        Atom(Text("xyz")),
                         Atom(Operator('+')),
                         Atom(Operator('-')),
                         Atom(Text("53.233")),
@@ -35,6 +36,10 @@
                     )),
                     children: [
                         Atom(Text("3.5x")),
+                        Container((
+                            idx: 2,
+                            version: 1,
+                        )),
                     ],
                 )),
                 version: 1,
@@ -47,6 +52,30 @@
                     )),
                     children: [
                         Atom(Text("23")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 2,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 2,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
                     ],
                 )),
                 version: 1,
@@ -71,6 +100,25 @@
                     ),
                     parent_id: (
                         idx: 1,
+                        version: 1,
+                    ),
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    kind: Fraction(
+                        numerator: (
+                            idx: 4,
+                            version: 1,
+                        ),
+                        denominator: (
+                            idx: 5,
+                            version: 1,
+                        ),
+                    ),
+                    parent_id: (
+                        idx: 2,
                         version: 1,
                     ),
                 )),

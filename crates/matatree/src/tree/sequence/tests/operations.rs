@@ -87,24 +87,6 @@ fn child_access_mutation_and_deletion_preserve_owned_atom() {
 }
 
 #[test]
-fn drain_children_accepts_end_boundary_and_rejects_invalid_ranges() {
-    let mut tree = Tree::new();
-    let root_id = tree.root_id();
-    {
-        let mut root = tree.get_mut_sequence(root_id).unwrap();
-        root.add_atom(Atom::Operator('a'));
-        root.add_atom(Atom::Operator('b'));
-        root.add_atom(Atom::Operator('c'));
-    }
-
-    let drained = tree.drain_children(root_id, 1..3).unwrap();
-    assert_eq!(drained.len(), 2);
-    assert_eq!(tree.root().child_count(), 1);
-    assert!(tree.drain_children(root_id, 1..1).unwrap().is_empty());
-    assert!(tree.drain_children(root_id, 0..2).is_none());
-}
-
-#[test]
 fn insert_atom_preserves_child_order() {
     let mut tree = Tree::new();
     let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();

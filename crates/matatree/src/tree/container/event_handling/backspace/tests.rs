@@ -803,6 +803,97 @@ fn flattening_fraction_preserves_mixed_children_in_order() {
 }
 
 #[test]
+fn flattening_fraction_restores_numerator_cursor_to_previous_grapheme() {
+    let (mut tree, container_id, numerator, _) =
+        make_fraction(true, false, vec![Atom::Text("é".into())], vec![]);
+    let mut cursor = Cursor::new_raw(numerator, None);
+
+    let result = tree
+        .get_mut_container(container_id)
+        .unwrap()
+        .handle_event(event::Event::Backspace, &mut cursor);
+
+    assert!(result.is_none());
+    assert!(matches!(
+        tree.root().get_child(0),
+        Some(ChildRef::Atom(Atom::Text(text))) if text == "éN"
+    ));
+    assert_eq!(cursor.child_index(), Some((0, Some(0))));
+}
+
+#[test]
+fn flattening_fraction_restores_denominator_cursor_to_previous_grapheme() {
+    let (mut tree, container_id, numerator, denominator) =
+        make_fraction(false, false, vec![], vec![]);
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Text("abc".into()));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Text("def".into()));
+    let mut cursor = Cursor::new_raw(denominator, None);
+
+    let result = tree
+        .get_mut_container(container_id)
+        .unwrap()
+        .handle_event(event::Event::Backspace, &mut cursor);
+
+    assert!(result.is_none());
+    assert!(matches!(
+        tree.root().get_child(0),
+        Some(ChildRef::Atom(Atom::Text(text))) if text == "abcdef"
+    ));
+    assert_eq!(cursor.child_index(), Some((0, Some(2))));
+}
+
+#[test]
+fn flattening_fraction_restores_denominator_cursor_after_parent_text_join() {
+    let (mut tree, container_id, _, denominator) =
+        make_fraction(true, true, vec![Atom::Text("P".into())], vec![]);
+    let mut cursor = Cursor::new_raw(denominator, None);
+
+    let result = tree
+        .get_mut_container(container_id)
+        .unwrap()
+        .handle_event(event::Event::Backspace, &mut cursor);
+
+    assert!(result.is_none());
+    assert!(matches!(
+        tree.root().get_child(0),
+        Some(ChildRef::Atom(Atom::Text(text))) if text == "PND"
+    ));
+    assert_eq!(cursor.child_index(), Some((0, Some(1))));
+}
+
+#[test]
+fn flattening_fraction_restores_denominator_cursor_to_previous_child() {
+    let (mut tree, container_id, numerator, denominator) =
+        make_fraction(false, false, vec![Atom::Operator('+')], vec![]);
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Operator('*'));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Operator('-'));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Text("text".into()));
+    let mut cursor = Cursor::new_raw(denominator, None);
+
+    let result = tree
+        .get_mut_container(container_id)
+        .unwrap()
+        .handle_event(event::Event::Backspace, &mut cursor);
+
+    assert!(result.is_none());
+    assert_eq!(cursor.child_index(), Some((1, None)));
+    assert!(matches!(
+        tree.root().get_child(1),
+        Some(ChildRef::Atom(Atom::Operator('*')))
+    ));
+}
+
+#[test]
 fn flattening_fraction_with_nested_fraction_children_keeps_them_in_parent() {
     let (mut tree, container_id, numerator, denominator) =
         make_fraction(false, true, vec![], vec![]);
