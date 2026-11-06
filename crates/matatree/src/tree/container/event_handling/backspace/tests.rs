@@ -33,18 +33,18 @@ impl NeighborContext {
             ),
             Self::OperatorsOnBothSides => (
                 "operators on both sides",
-                vec![Atom::Operator('+')],
-                vec![Atom::Operator('-')],
+                vec![Atom::Operator(crate::tree::OperatorKind::Add)],
+                vec![Atom::Operator(crate::tree::OperatorKind::Sub)],
             ),
             Self::OperatorBeforeTextAfter => (
                 "operator before and text after",
-                vec![Atom::Operator('+')],
+                vec![Atom::Operator(crate::tree::OperatorKind::Add)],
                 vec![Atom::Text("R".into())],
             ),
             Self::TextBeforeOperatorAfter => (
                 "text before and operator after",
                 vec![Atom::Text("L".into())],
-                vec![Atom::Operator('-')],
+                vec![Atom::Operator(crate::tree::OperatorKind::Sub)],
             ),
         }
     }
@@ -593,7 +593,7 @@ fn assert_operator_backspace_is_forwarded(side: CursorSide) {
     };
     tree.get_mut_sequence(sequence_id)
         .unwrap()
-        .add_atom(Atom::Operator('+'));
+        .add_atom(Atom::Operator(crate::tree::OperatorKind::Add));
     let mut cursor = Cursor::new_raw(sequence_id, Some((0, None)));
     let result = tree
         .get_mut_container(container_id)
@@ -766,13 +766,13 @@ fn flattening_fraction_preserves_mixed_children_in_order() {
         .add_atom(Atom::Text("N".into()));
     tree.get_mut_sequence(numerator)
         .unwrap()
-        .add_atom(Atom::Operator('+'));
+        .add_atom(Atom::Operator(crate::tree::OperatorKind::Add));
     tree.get_mut_sequence(denominator)
         .unwrap()
         .add_atom(Atom::Text("D".into()));
     tree.get_mut_sequence(denominator)
         .unwrap()
-        .add_atom(Atom::Operator('-'));
+        .add_atom(Atom::Operator(crate::tree::OperatorKind::Sub));
     let mut cursor = Cursor::new_raw(numerator, None);
 
     let result = tree
@@ -794,9 +794,9 @@ fn flattening_fraction_preserves_mixed_children_in_order() {
         actual,
         vec![
             Atom::Text("LN".into()),
-            Atom::Operator('+'),
+            Atom::Operator(crate::tree::OperatorKind::Add),
             Atom::Text("D".into()),
-            Atom::Operator('-'),
+            Atom::Operator(crate::tree::OperatorKind::Sub),
             Atom::Text("R".into()),
         ]
     );
@@ -868,13 +868,13 @@ fn flattening_fraction_restores_denominator_cursor_after_parent_text_join() {
 #[test]
 fn flattening_fraction_restores_denominator_cursor_to_previous_child() {
     let (mut tree, container_id, numerator, denominator) =
-        make_fraction(false, false, vec![Atom::Operator('+')], vec![]);
+        make_fraction(false, false, vec![Atom::Operator(crate::tree::OperatorKind::Add)], vec![]);
     tree.get_mut_sequence(numerator)
         .unwrap()
-        .add_atom(Atom::Operator('*'));
+        .add_atom(Atom::Operator(crate::tree::OperatorKind::Mul));
     tree.get_mut_sequence(denominator)
         .unwrap()
-        .add_atom(Atom::Operator('-'));
+        .add_atom(Atom::Operator(crate::tree::OperatorKind::Sub));
     tree.get_mut_sequence(denominator)
         .unwrap()
         .add_atom(Atom::Text("text".into()));
@@ -889,7 +889,7 @@ fn flattening_fraction_restores_denominator_cursor_to_previous_child() {
     assert_eq!(cursor.child_index(), Some((1, None)));
     assert!(matches!(
         tree.root().get_child(1),
-        Some(ChildRef::Atom(Atom::Operator('*')))
+        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Mul)))
     ));
 }
 

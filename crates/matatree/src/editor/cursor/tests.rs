@@ -19,7 +19,7 @@ fn moving_left_from_operator_lands_on_last_text_grapheme() {
     {
         let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
         root.add_atom(Atom::Text("xy".into()));
-        root.add_atom(Atom::Operator('+'));
+        root.add_atom(Atom::Operator(crate::tree::OperatorKind::Add));
         root.add_atom(Atom::Text("z".into()));
     }
 

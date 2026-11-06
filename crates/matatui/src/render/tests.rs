@@ -12,9 +12,9 @@ fn renders_fraction_and_surrounding_atoms_on_expected_rows() {
     let fraction_id = {
         let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
         root.add_atom(Atom::Text("2".into()));
-        root.add_atom(Atom::Operator('+'));
+        root.add_atom(Atom::Operator(matatree::tree::OperatorKind::Add));
         let fraction_id = root.add_container(ContainerKind::fraction).unwrap();
-        root.add_atom(Atom::Operator('-'));
+        root.add_atom(Atom::Operator(matatree::tree::OperatorKind::Sub));
         root.add_atom(Atom::Text("5".into()));
         fraction_id
     };

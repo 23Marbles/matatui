@@ -5,7 +5,7 @@ fn insertion_sets_fraction_sequence_parents_and_checks_index() {
     let mut tree = Tree::new();
     let (container_id, numerator, denominator) = {
         let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
-        root.add_atom(Atom::Operator('+'));
+        root.add_atom(Atom::Operator(crate::tree::OperatorKind::Add));
         let container_id = root
             .insert_container(1, |[numerator, denominator]| {
                 ContainerKind::fraction([numerator, denominator])
@@ -43,7 +43,7 @@ fn insertion_sets_fraction_sequence_parents_and_checks_index() {
     );
     assert!(matches!(
         tree.root().get_child(0),
-        Some(ChildRef::Atom(Atom::Operator('+')))
+        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Add)))
     ));
     assert!(matches!(
         tree.root().get_child(1),
@@ -92,7 +92,7 @@ fn insert_atom_preserves_child_order() {
     let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
     root.add_atom(Atom::Text("first".into()));
     root.add_atom(Atom::Text("last".into()));
-    root.insert_atom(1, Atom::Operator('+'));
+    root.insert_atom(1, Atom::Operator(crate::tree::OperatorKind::Add));
 
     assert!(matches!(
         root.get_child(0),
@@ -100,7 +100,7 @@ fn insert_atom_preserves_child_order() {
     ));
     assert!(matches!(
         root.get_child(1),
-        Some(ChildRef::Atom(Atom::Operator('+')))
+        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Add)))
     ));
     assert!(matches!(
         root.get_child(2),

@@ -10,7 +10,7 @@ fn backspace_deletes_operator_and_joins_neighbors() {
     {
         let mut root = tree.get_mut_sequence(tree.root_id()).unwrap();
         root.add_atom(Atom::Text("ab".into()));
-        root.add_atom(Atom::Operator('+'));
+        root.add_atom(Atom::Operator(crate::tree::OperatorKind::Add));
         root.add_atom(Atom::Text("cd".into()));
 
         cursor = Cursor::new_raw(root.id(), Some((1, None)));
