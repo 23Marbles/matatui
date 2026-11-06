@@ -1,4 +1,5 @@
 mod backspace;
+mod insert_char;
 
 use crate::editor::{cursor::Cursor, event};
 
@@ -11,6 +12,7 @@ impl ContainerMut<'_> {
                 unimplemented!("Should be handled by the editor")
             }
             event::Event::Backspace => backspace::handle(self, cursor),
+            event::Event::InsertChar(ch) => insert_char::handle(self, ch, cursor),
         }
     }
 }

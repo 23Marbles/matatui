@@ -7,6 +7,8 @@ use crate::editor::{
 
 use super::*;
 
+mod insert_char;
+
 impl SequenceMut<'_> {
     pub fn handle_event(&mut self, event: event::Event, cursor: &mut Cursor) {
         match event {
@@ -52,6 +54,7 @@ impl SequenceMut<'_> {
 
                 let _ = join_text_children(&mut self.children, child_idx);
             }
+            event::Event::InsertChar(ch) => insert_char::handle(self, ch, cursor),
         }
     }
 }
