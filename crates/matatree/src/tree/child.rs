@@ -1,3 +1,5 @@
+use std::fmt::{Display, Write};
+
 use super::*;
 
 #[must_use]
@@ -33,7 +35,49 @@ pub(super) fn join_text_children(children: &mut Vec<Child>, join_seam: usize) ->
 pub enum Atom {
     Text(String),
 
-    Operator(char),
+    Operator(OperatorKind),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum OperatorKind {
+    Mul,
+    Add,
+    Sub,
+    GreaterThan,
+    LessThan,
+    Equal,
+}
+
+impl OperatorKind {
+    pub fn from_char(ch: char) -> Option<Self> {
+        Some(match ch {
+            '*' => Self::Mul,
+            '+' => Self::Add,
+            '-' => Self::Sub,
+            '>' => Self::GreaterThan,
+            '<' => Self::LessThan,
+            '=' => Self::Equal,
+            _ => return None,
+        })
+    }
+
+    pub fn to_char(&self) -> char {
+        match self {
+            Self::Mul => '*',
+            Self::Add => '+',
+            Self::Sub => '-',
+            Self::GreaterThan => '>',
+            Self::LessThan => '<',
+            Self::Equal => '=',
+        }
+    }
+}
+
+impl Display for OperatorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_char(self.to_char())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -124,7 +168,7 @@ mod tests {
                     ContainerKind::fraction([numerator, denominator])
                 })
                 .unwrap();
-            root.add_atom(Atom::Operator('+'));
+            root.add_atom(Atom::Operator(OperatorKind::Add));
             let ContainerKind::Fraction { numerator, .. } =
                 root.tree().get_container(id).unwrap().kind().clone();
             (id, numerator)
@@ -139,7 +183,10 @@ mod tests {
         assert!(
             matches!(&children[1], ChildRef::Container(container) if container.id() == container_id)
         );
-        assert!(matches!(&children[2], ChildRef::Atom(Atom::Operator('+'))));
+        assert!(matches!(
+            &children[2],
+            ChildRef::Atom(Atom::Operator(OperatorKind::Add))
+        ));
         assert_eq!(children.len(), 3);
         assert!(tree.root().get_child(3).is_none());
     }
@@ -159,7 +206,7 @@ mod tests {
 
         let mut separated = vec![
             Child::Atom(Atom::Text("left".into())),
-            Child::Atom(Atom::Operator('+')),
+            Child::Atom(Atom::Operator(OperatorKind::Add)),
             Child::Atom(Atom::Text("right".into())),
         ];
         assert_eq!(join_text_children(&mut separated, 1), None);

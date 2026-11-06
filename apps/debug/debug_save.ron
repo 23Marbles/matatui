@@ -13,17 +13,23 @@
                 value: Some((
                     parent: None,
                     children: [
-                        Atom(Text("2xy")),
-                        Atom(Operator('+')),
-                        Atom(Text("34")),
+                        Atom(Text("x")),
+                        Atom(Operator(Mul)),
+                        Atom(Text("x")),
                         Container((
                             idx: 1,
                             version: 1,
                         )),
-                        Atom(Text("xyz")),
-                        Atom(Operator('+')),
-                        Atom(Operator('-')),
-                        Atom(Text("53.233")),
+                        Atom(Operator(Add)),
+                        Atom(Text("x")),
+                        Container((
+                            idx: 4,
+                            version: 1,
+                        )),
+                        Atom(Operator(Sub)),
+                        Atom(Text("x")),
+                        Atom(Operator(LessThan)),
+                        Atom(Text("x")),
                     ],
                 )),
                 version: 1,
@@ -35,11 +41,14 @@
                         version: 1,
                     )),
                     children: [
-                        Atom(Text("3.5x")),
+                        Atom(Text("x")),
+                        Atom(Operator(Add)),
                         Container((
                             idx: 2,
                             version: 1,
                         )),
+                        Atom(Operator(Add)),
+                        Atom(Text("x")),
                     ],
                 )),
                 version: 1,
@@ -51,7 +60,11 @@
                         version: 1,
                     )),
                     children: [
-                        Atom(Text("23")),
+                        Atom(Text("x")),
+                        Container((
+                            idx: 3,
+                            version: 1,
+                        )),
                     ],
                 )),
                 version: 1,
@@ -72,6 +85,54 @@
                 value: Some((
                     parent: Some((
                         idx: 2,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 3,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 3,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 4,
+                        version: 1,
+                    )),
+                    children: [
+                        Atom(Text("x")),
+                    ],
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    parent: Some((
+                        idx: 4,
                         version: 1,
                     )),
                     children: [
@@ -124,13 +185,51 @@
                 )),
                 version: 1,
             ),
+            (
+                value: Some((
+                    kind: Fraction(
+                        numerator: (
+                            idx: 6,
+                            version: 1,
+                        ),
+                        denominator: (
+                            idx: 7,
+                            version: 1,
+                        ),
+                    ),
+                    parent_id: (
+                        idx: 3,
+                        version: 1,
+                    ),
+                )),
+                version: 1,
+            ),
+            (
+                value: Some((
+                    kind: Fraction(
+                        numerator: (
+                            idx: 8,
+                            version: 1,
+                        ),
+                        denominator: (
+                            idx: 9,
+                            version: 1,
+                        ),
+                    ),
+                    parent_id: (
+                        idx: 1,
+                        version: 1,
+                    ),
+                )),
+                version: 1,
+            ),
         ],
     ),
     cursor: (
         sequence_id: (
-            idx: 2,
+            idx: 1,
             version: 1,
         ),
-        child_index: Some((0, Some(3))),
+        child_index: None,
     ),
 )

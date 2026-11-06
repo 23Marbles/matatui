@@ -1,9 +1,3 @@
-use crate::{editor::{cursor::Cursor, event}, tree::{SequenceMut}};
+use crate::{editor::cursor::Cursor, tree::SequenceMut};
 
-fn is_operator(ch: char) -> bool {
-    todo!()
-}
-
-pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, _cursor: &mut Cursor) {
-
-}
+pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, _cursor: &mut Cursor) {}

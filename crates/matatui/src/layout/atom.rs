@@ -9,8 +9,8 @@ pub fn layout_atom<'a>(atom: &'a Atom) -> MeasurementResult<'a, RatatuiLayout> {
             measurement: RatatuiLayout.measure_str(text),
             cursor_pos: None,
         },
-        Atom::Operator(ch) => MeasurementResult {
-            kind: NodeKindRef::Operator(*ch),
+        Atom::Operator(kind) => MeasurementResult {
+            kind: NodeKindRef::Operator(kind.to_char()),
             measurement: Measurement {
                 width: 1,
                 ascent: 1,

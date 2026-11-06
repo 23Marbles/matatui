@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use egui::{CollapsingHeader, WidgetText};
 use matatree::{
     editor::Editor,
-    tree::{Atom, ChildRef, SequenceId, SequenceRef},
+    tree::{Atom, ChildRef, OperatorKind, SequenceId, SequenceRef},
 };
 
 use crate::{app, command::TreeEdit};
@@ -46,7 +46,7 @@ pub fn debug_sequence(
             ui.label(label);
             if ui.small_button("+").clicked() {
                 header_edits.push(TreeEdit::AddAtom {
-                    atom: Atom::Operator('+'),
+                    atom: Atom::Operator(OperatorKind::Add),
                     parent: sequence.id(),
                 });
             }
@@ -123,11 +123,13 @@ pub fn debug_sequence(
                                             )
                                             .changed()
                                         {
-                                            if let Some(ch) = value.chars().next() {
+                                            if let Some(ch) = value.chars().next()
+                                                && let Some(kind) = OperatorKind::from_char(ch)
+                                            {
                                                 edits.push(TreeEdit::ReplaceAtom {
                                                     parent: sequence.id(),
                                                     index,
-                                                    atom: Atom::Operator(ch),
+                                                    atom: Atom::Operator(kind),
                                                 });
                                             }
                                         }
