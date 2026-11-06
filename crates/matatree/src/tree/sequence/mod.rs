@@ -1,6 +1,7 @@
 mod access;
 mod event_handling;
 mod mutation;
+mod text;
 mod tree_mutation;
 
 #[cfg(test)]

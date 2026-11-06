@@ -64,7 +64,7 @@ impl OperatorKind {
 
     pub fn to_char(&self) -> char {
         match self {
-            Self::Mul => '*',
+            Self::Mul => '×',
             Self::Add => '+',
             Self::Sub => '-',
             Self::GreaterThan => '>',

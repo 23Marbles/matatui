@@ -867,8 +867,12 @@ fn flattening_fraction_restores_denominator_cursor_after_parent_text_join() {
 
 #[test]
 fn flattening_fraction_restores_denominator_cursor_to_previous_child() {
-    let (mut tree, container_id, numerator, denominator) =
-        make_fraction(false, false, vec![Atom::Operator(crate::tree::OperatorKind::Add)], vec![]);
+    let (mut tree, container_id, numerator, denominator) = make_fraction(
+        false,
+        false,
+        vec![Atom::Operator(crate::tree::OperatorKind::Add)],
+        vec![],
+    );
     tree.get_mut_sequence(numerator)
         .unwrap()
         .add_atom(Atom::Operator(crate::tree::OperatorKind::Mul));
@@ -889,7 +893,9 @@ fn flattening_fraction_restores_denominator_cursor_to_previous_child() {
     assert_eq!(cursor.child_index(), Some((1, None)));
     assert!(matches!(
         tree.root().get_child(1),
-        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Mul)))
+        Some(ChildRef::Atom(Atom::Operator(
+            crate::tree::OperatorKind::Mul
+        )))
     ));
 }
 

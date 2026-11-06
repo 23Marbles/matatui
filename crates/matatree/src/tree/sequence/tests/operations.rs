@@ -43,7 +43,9 @@ fn insertion_sets_fraction_sequence_parents_and_checks_index() {
     );
     assert!(matches!(
         tree.root().get_child(0),
-        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Add)))
+        Some(ChildRef::Atom(Atom::Operator(
+            crate::tree::OperatorKind::Add
+        )))
     ));
     assert!(matches!(
         tree.root().get_child(1),
@@ -100,7 +102,9 @@ fn insert_atom_preserves_child_order() {
     ));
     assert!(matches!(
         root.get_child(1),
-        Some(ChildRef::Atom(Atom::Operator(crate::tree::OperatorKind::Add)))
+        Some(ChildRef::Atom(Atom::Operator(
+            crate::tree::OperatorKind::Add
+        )))
     ));
     assert!(matches!(
         root.get_child(2),

@@ -23,7 +23,10 @@ impl CursorControl for SequenceRef<'_> {
         };
 
         if move_cursor_to_prev_child && cursor.child_index.is_some_and(|(i, _)| i == 0) {
-            return Some(Cursor { child_index: None, ..cursor });
+            return Some(Cursor {
+                child_index: None,
+                ..cursor
+            });
         }
 
         if let Some((idx, text_idx)) = move_cursor_to_prev_child

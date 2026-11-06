@@ -1,7 +1,7 @@
 pub enum Event {
     MoveCursorLogical { direction: CursorDirection },
     Backspace,
-    InsertChar(char)
+    InsertChar(char),
 }
 
 pub enum CursorDirection {

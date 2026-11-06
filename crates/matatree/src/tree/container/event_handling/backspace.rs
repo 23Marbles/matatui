@@ -27,7 +27,13 @@ pub(super) fn handle(container: ContainerMut<'_>, cursor: &mut Cursor) -> Option
     for child in numerator_children.iter_mut() {
         match child {
             Child::Atom(_) => (),
-            Child::Container(container_id) => container.tree.get_mut_container(*container_id).unwrap().parent_id = parent_id,
+            Child::Container(container_id) => {
+                container
+                    .tree
+                    .get_mut_container(*container_id)
+                    .unwrap()
+                    .parent_id = parent_id
+            }
         }
     }
 
@@ -42,7 +48,13 @@ pub(super) fn handle(container: ContainerMut<'_>, cursor: &mut Cursor) -> Option
     for child in denominator_children.iter_mut() {
         match child {
             Child::Atom(_) => (),
-            Child::Container(container_id) => container.tree.get_mut_container(*container_id).unwrap().parent_id = parent_id,
+            Child::Container(container_id) => {
+                container
+                    .tree
+                    .get_mut_container(*container_id)
+                    .unwrap()
+                    .parent_id = parent_id
+            }
         }
     }
 
