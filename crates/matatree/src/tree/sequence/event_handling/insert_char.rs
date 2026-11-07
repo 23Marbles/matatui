@@ -1,3 +1,7 @@
+use std::iter::repeat_n;
+
+use slotmap::SlotMap;
+
 use crate::{
     editor::cursor::{Cursor, CursorControl},
     tree::{
@@ -6,40 +10,166 @@ use crate::{
     },
 };
 
-fn container_from_char(ch: char) -> Option<(usize, impl FnOnce(Vec<SequenceId>) -> ContainerKind)> {
+struct ContainerBlueprint {
+    kind: ContainerKind,
+    /// If some if there is a left id expecting everything up to the closest pattern before the insertion point
+    /// The function is non-inclusive
+    left_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
+    /// If some if there is a right id expecting everything up to the closest pattern after the insertion point
+    right_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
+    /// Where to put the cursor after creation
+    cursor_pos_after: Cursor,
+}
+
+struct ContainerCreator {
+    n_ids: usize,
+    func: Box<dyn FnOnce(Vec<SequenceId>) -> ContainerBlueprint>,
+}
+
+impl ContainerCreator {
+    pub fn new<const N: usize>(
+        kind_func: impl FnOnce([SequenceId; N]) -> ContainerKind + 'static,
+        blueprint_maker: impl FnOnce(ContainerKind, Vec<SequenceId>) -> ContainerBlueprint + 'static,
+    ) -> Self {
+        Self {
+            n_ids: N,
+            func: Box::new(|ids| blueprint_maker(kind_func(*ids.as_array().unwrap()), ids)),
+        }
+    }
+
+    pub fn insert(self, sequence: &mut SequenceMut<'_>, idx: usize, cursor: &mut Cursor) {
+        let Self { n_ids, func } = self;
+
+        assert!(
+            idx <= sequence.as_ref().child_count(),
+            "Insertion index out of bounds"
+        );
+
+        let child_seq_ids = repeat_n(SlotMap::insert, n_ids)
+            .map(|f| f(&mut sequence.tree.sequences, Sequence::new_unchecked(None)))
+            .collect::<Vec<_>>();
+
+        let ContainerBlueprint {
+            kind,
+            left_id,
+            right_id,
+            cursor_pos_after,
+        } = func(child_seq_ids.clone());
+
+        let container_id = sequence
+            .tree
+            .containers
+            .insert(Container::new_unchecked(sequence.id(), kind));
+
+        for id in child_seq_ids {
+            sequence
+                .tree
+                .sequences
+                .get_mut(id)
+                .expect("Just inserted this sequence")
+                .parent = Some(container_id);
+        }
+
+        let removed_before = if let Some((seq_id, mut p)) = left_id {
+            let start_idx = sequence.children[..idx]
+                .iter()
+                .enumerate()
+                .rfind(|(_, child)| p(child))
+                .map_or(0, |(i, _)| i + 1);
+
+            let moved_children = sequence.children.drain(start_idx..idx).collect::<Vec<_>>();
+
+            for child in &moved_children {
+                if let Child::Container(id) = child {
+                    sequence
+                        .tree
+                        .containers
+                        .get_mut(*id)
+                        .expect("The child just taken has come from the tree so should exist")
+                        .parent_id = seq_id
+                }
+            }
+
+            sequence
+                .tree
+                .sequences
+                .get_mut(seq_id)
+                .expect("Self should have a know index")
+                .children
+                .splice(0..0, moved_children);
+
+            idx - start_idx
+        } else {
+            0
+        };
+
+        if let Some((seq_id, mut p)) = right_id {
+            let end_idx = sequence
+                .children
+                .iter()
+                .enumerate()
+                .skip(idx)
+                .find(|(_, child)| p(child))
+                .map_or(0, |(i, _)| i);
+
+            let mut moved_children = sequence.children.drain(idx..end_idx).collect::<Vec<_>>();
+
+            for child in &moved_children {
+                if let Child::Container(id) = child {
+                    sequence
+                        .tree
+                        .containers
+                        .get_mut(*id)
+                        .expect("The child just taken has come from the tree so should exist")
+                        .parent_id = seq_id
+                }
+            }
+
+            sequence
+                .tree
+                .sequences
+                .get_mut(seq_id)
+                .expect("Self should have a know index")
+                .children
+                .append(&mut moved_children);
+        }
+
+        sequence
+            .children
+            .insert(idx - removed_before, Child::Container(container_id));
+
+        *cursor = cursor_pos_after
+    }
+}
+
+fn container_from_char(ch: char) -> Option<ContainerCreator> {
     match ch {
-        '/' => Some((2, |vec: Vec<SequenceId>| {
-            ContainerKind::fraction(*vec.as_array().unwrap())
-        })),
+        '/' => Some(ContainerCreator::new(
+            ContainerKind::fraction,
+            |kind, ids| ContainerBlueprint {
+                kind,
+                left_id: Some((
+                    ids[0],
+                    Box::new(|child| matches!(child, Child::Atom(Atom::Operator(_)))),
+                )),
+                right_id: None,
+                cursor_pos_after: Cursor::new_raw(ids[0], None),
+            },
+        )),
         _ => None,
     }
 }
 
 pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Cursor) {
+    enum ChildCreator {
+        Operator(OperatorKind),
+        Container(ContainerCreator),
+    }
+
     let child = if let Some(operator) = OperatorKind::from_char(ch) {
-        Some(Child::Atom(Atom::Operator(operator)))
-    } else if let Some((seq_ids, func)) = container_from_char(ch) {
-        let vec: Vec<_> = (0..seq_ids)
-            .map(|_| {
-                sequence
-                    .tree
-                    .sequences
-                    .insert(Sequence::new_unchecked(None))
-            })
-            .collect();
-
-        let kind = func(vec.clone());
-
-        let parent = sequence
-            .tree
-            .containers
-            .insert(Container::new_unchecked(sequence.id, kind));
-
-        for id in vec {
-            sequence.tree.sequences.get_mut(id).unwrap().parent = Some(parent);
-        }
-
-        Some(Child::Container(parent))
+        Some(ChildCreator::Operator(operator))
+    } else if let Some(creator) = container_from_char(ch) {
+        Some(ChildCreator::Container(creator))
     } else {
         None
     };
@@ -56,14 +186,31 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
                 if !remaining.is_empty() {
                     sequence.insert_atom(child_idx + 1, Atom::Text(remaining));
                 }
-                sequence.children.insert(child_idx + 1, child);
+
+                match child {
+                    ChildCreator::Operator(operator_kind) => {
+                        sequence.insert_atom(child_idx + 1, Atom::Operator(operator_kind))
+                    }
+                    ChildCreator::Container(container_creator) => {
+                        container_creator.insert(sequence, child_idx + 1, cursor);
+                        return;
+                    }
+                }
             } else {
                 text.insert(cursor_idx, ch);
             }
         }
         CursorTextMut::NoText { child_idx } => {
             if let Some(child) = child {
-                sequence.children.insert(child_idx, child);
+                match child {
+                    ChildCreator::Operator(operator_kind) => sequence
+                        .children
+                        .insert(child_idx, Child::Atom(Atom::Operator(operator_kind))),
+                    ChildCreator::Container(container_creator) => {
+                        container_creator.insert(sequence, child_idx, cursor);
+                        return;
+                    }
+                }
             } else {
                 sequence.insert_atom(child_idx, Atom::Text(ch.to_string()));
             }
