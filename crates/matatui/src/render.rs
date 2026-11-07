@@ -29,13 +29,13 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
             NodeKindRef::Text(text) => {
                 if let Some(line_y) = area
                     .y
-                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                    .checked_add_signed(layout.measurement.ascent.saturating_sub(1))
                 {
                     Text::raw(text).centered().render(
                         Rect {
                             y: line_y,
                             height: 1,
-                            width: layout.measurement.width,
+                            width: layout.measurement.width as u16,
                             ..area
                         },
                         buf,
@@ -45,13 +45,13 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
             NodeKindRef::Operator(ch) => {
                 if let Some(line_y) = area
                     .y
-                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                    .checked_add_signed(layout.measurement.ascent.saturating_sub(1))
                 {
                     Text::raw(ch.to_string()).centered().render(
                         Rect {
                             y: line_y,
                             height: 1,
-                            width: layout.measurement.width,
+                            width: layout.measurement.width as u16,
                             ..area
                         },
                         buf,
@@ -65,8 +65,8 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
 
                 for node_ref in positioned_node_refs {
                     let (Some(x), Some(y)) = (
-                        area.x.checked_add(node_ref.x),
-                        area.y.checked_add(node_ref.y),
+                        area.x.checked_add_signed(node_ref.x),
+                        area.y.checked_add_signed(node_ref.y),
                     ) else {
                         continue;
                     };
@@ -74,8 +74,8 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                     let rect = Rect {
                         x,
                         y,
-                        width: node_ref.measurement.width,
-                        height: node_ref.measurement.height(),
+                        width: node_ref.measurement.width as u16,
+                        height: node_ref.measurement.height() as u16,
                     };
 
                     if !buf.area.intersects(rect) {
@@ -100,14 +100,14 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
             } => {
                 // Numerator
                 if let (Some(x), Some(y)) = (
-                    area.x.checked_add(numerator.x),
-                    area.y.checked_add(numerator.y),
+                    area.x.checked_add_signed(numerator.x),
+                    area.y.checked_add_signed(numerator.y),
                 ) {
                     let numerator_rect = Rect {
                         x,
                         y,
-                        width: numerator.measurement.width,
-                        height: numerator.measurement.height(),
+                        width: numerator.measurement.width as u16,
+                        height: numerator.measurement.height() as u16,
                     };
 
                     Self::render_layout(
@@ -124,14 +124,14 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
 
                 // Denominator
                 if let (Some(x), Some(y)) = (
-                    area.x.checked_add(denominator.x),
-                    area.y.checked_add(denominator.y),
+                    area.x.checked_add_signed(denominator.x),
+                    area.y.checked_add_signed(denominator.y),
                 ) {
                     let denominator_rect = Rect {
                         x,
                         y,
-                        width: denominator.measurement.width,
-                        height: denominator.measurement.height(),
+                        width: denominator.measurement.width as u16,
+                        height: denominator.measurement.height() as u16,
                     };
 
                     Self::render_layout(
@@ -148,7 +148,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
 
                 if let Some(line_y) = area
                     .y
-                    .checked_add(layout.measurement.ascent.saturating_sub(1))
+                    .checked_add_signed(layout.measurement.ascent.saturating_sub(1))
                 {
                     let text = repeat_n('─', layout.measurement.width as usize).collect::<String>();
 
@@ -156,7 +156,7 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
                         Rect {
                             y: line_y,
                             height: 1,
-                            width: layout.measurement.width,
+                            width: layout.measurement.width as u16,
                             ..area
                         },
                         buf,
@@ -167,10 +167,10 @@ impl matatree::render::Renderer<RatatuiLayout> for RatatuiRender {
 
         if let Some((x, y, height)) = layout.cursor_pos {
             for y_offset in 0..height {
-                let Some(cell) = area.x.checked_add(x).and_then(|x| {
+                let Some(cell) = area.x.checked_add_signed(x).and_then(|x| {
                     area.y
-                        .checked_add(y)?
-                        .checked_add(y_offset)
+                        .checked_add_signed(y)?
+                        .checked_add_signed(y_offset)
                         .and_then(|y| buf.cell_mut((x, y)))
                 }) else {
                     continue;

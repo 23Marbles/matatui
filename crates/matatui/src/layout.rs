@@ -12,11 +12,11 @@ use crate::layout::atom::layout_atom;
 
 pub struct RatatuiLayout;
 
-impl FontLayout<u16> for RatatuiLayout {
-    fn measure_str(&self, s: &str) -> Measurement<u16> {
+impl FontLayout<i16> for RatatuiLayout {
+    fn measure_str(&self, s: &str) -> Measurement<i16> {
         Measurement {
             width: <str as unicode_segmentation::UnicodeSegmentation>::graphemes(s, true).count()
-                as u16,
+                as i16,
             ascent: 1,
             descent: 0,
         }
@@ -24,7 +24,7 @@ impl FontLayout<u16> for RatatuiLayout {
 }
 
 impl LayoutEngine for RatatuiLayout {
-    type Unit = u16;
+    type Unit = i16;
 
     type FontLayout = Self;
 
@@ -74,7 +74,7 @@ impl LayoutEngine for RatatuiLayout {
         };
 
         let mut positioned_children = Vec::with_capacity(results.len());
-        let mut current_x_pos: u16 = 0;
+        let mut current_x_pos: i16 = 0;
 
         if results
             .first()
@@ -82,7 +82,11 @@ impl LayoutEngine for RatatuiLayout {
                 matches!(kind, NodeKindRef::Fraction { .. })
             })
         {
-            current_x_pos += 1;
+            if sequence.is_root() {
+                current_x_pos += 1;
+            } else if let Some((x, ..)) = &mut cursor_pos {
+                *x = -1
+            }
         }
 
         for (idx, res) in results.into_iter().enumerate() {
@@ -95,7 +99,7 @@ impl LayoutEngine for RatatuiLayout {
             if let Some((cursor_idx, text_idx)) = cursor_child {
                 if cursor_idx == idx {
                     let text_offset = match (&res.kind, text_idx) {
-                        (NodeKindRef::Text(_), Some(text_idx)) => text_idx as u16,
+                        (NodeKindRef::Text(_), Some(text_idx)) => text_idx as i16,
                         (NodeKindRef::Text(_), None) => 0,
                         (NodeKindRef::Operator(_), _) => {
                             if let Some(

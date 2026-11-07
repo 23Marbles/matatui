@@ -9,6 +9,10 @@ impl Sequence {
 }
 
 impl<'a> SequenceRef<'a> {
+    pub fn is_root(&self) -> bool {
+        self.tree().root_id() == self.id()
+    }
+
     pub fn id(&self) -> SequenceId {
         self.id
     }
