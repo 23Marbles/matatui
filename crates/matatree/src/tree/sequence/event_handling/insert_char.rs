@@ -183,6 +183,11 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
             if let Some(child) = child {
                 let remaining = text.split_off(cursor_idx);
 
+                if text.is_empty() {
+                    todo!("Remove the original text child")
+                }
+
+                // Fix start being empty
                 if !remaining.is_empty() {
                     sequence.insert_atom(child_idx + 1, Atom::Text(remaining));
                 }
