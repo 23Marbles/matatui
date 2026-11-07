@@ -14,11 +14,12 @@ struct ContainerBlueprint {
     kind: ContainerKind,
     /// If some if there is a left id expecting everything up to the closest pattern before the insertion point
     /// The function is non-inclusive
+    ///
     left_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
     /// If some if there is a right id expecting everything up to the closest pattern after the insertion point
     right_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
     /// Where to put the cursor after creation
-    cursor_pos_after: Cursor,
+    default_cursor_pos: Cursor,
 }
 
 struct ContainerCreator {
@@ -53,7 +54,7 @@ impl ContainerCreator {
             kind,
             left_id,
             right_id,
-            cursor_pos_after,
+            default_cursor_pos,
         } = func(child_seq_ids.clone());
 
         let container_id = sequence
@@ -138,7 +139,7 @@ impl ContainerCreator {
             .children
             .insert(idx - removed_before, Child::Container(container_id));
 
-        *cursor = cursor_pos_after
+        *cursor = default_cursor_pos
     }
 }
 
@@ -153,7 +154,7 @@ fn container_from_char(ch: char) -> Option<ContainerCreator> {
                     Box::new(|child| matches!(child, Child::Atom(Atom::Operator(_)))),
                 )),
                 right_id: None,
-                cursor_pos_after: Cursor::new_raw(ids[0], None),
+                default_cursor_pos: Cursor::new_raw(ids[1], None),
             },
         )),
         _ => None,
@@ -181,23 +182,24 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
             text,
         } => {
             if let Some(child) = child {
-                let remaining = text.split_off(cursor_idx);
+                let offset = if cursor_idx == 0 {
+                    0
+                } else {
+                    let remaining = text.split_off(cursor_idx);
 
-                if text.is_empty() {
-                    todo!("Remove the original text child")
-                }
+                    if !remaining.is_empty() {
+                        sequence.insert_atom(child_idx + 1, Atom::Text(remaining));
+                    };
 
-                // Fix start being empty
-                if !remaining.is_empty() {
-                    sequence.insert_atom(child_idx + 1, Atom::Text(remaining));
-                }
+                    1
+                };
 
                 match child {
                     ChildCreator::Operator(operator_kind) => {
-                        sequence.insert_atom(child_idx + 1, Atom::Operator(operator_kind))
+                        sequence.insert_atom(child_idx + offset, Atom::Operator(operator_kind))
                     }
                     ChildCreator::Container(container_creator) => {
-                        container_creator.insert(sequence, child_idx + 1, cursor);
+                        container_creator.insert(sequence, child_idx + offset, cursor);
                         return;
                     }
                 }
