@@ -2403,7 +2403,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "matatui"
+name = "matatree-tui"
 version = "0.1.0"
 dependencies = [
  "log",
@@ -3645,7 +3645,7 @@ dependencies = [
  "env_logger",
  "log",
  "matatree",
- "matatui",
+ "matatree-tui",
  "ratatui",
  "ron",
  "serde",

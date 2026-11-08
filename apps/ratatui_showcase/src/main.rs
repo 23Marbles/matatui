@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use clap::Parser;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use matatree::editor::{CursoredTree, Editor};
-use matatui::RatatuiEditor;
+use matatree_tui::RatatuiEditor;
 
 #[derive(Debug, clap::Parser)]
 struct Args {
