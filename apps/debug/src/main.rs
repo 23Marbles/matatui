@@ -23,7 +23,9 @@ fn main() -> Result<(), eframe::Error> {
 
     let args = Args::parse();
 
-    let result = eframe::run_native(
+    
+
+    eframe::run_native(
         "Matatree debugger",
         NativeOptions::default(),
         Box::new(|_| {
@@ -35,7 +37,5 @@ fn main() -> Result<(), eframe::Error> {
 
             Ok(Box::new(app))
         }),
-    );
-
-    result
+    )
 }

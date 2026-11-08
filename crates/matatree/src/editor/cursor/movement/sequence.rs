@@ -30,7 +30,7 @@ impl CursorControl for SequenceRef<'_> {
         }
 
         if let Some((idx, text_idx)) = move_cursor_to_prev_child
-            .then(|| cursor.child_index.as_mut())
+            .then_some(cursor.child_index.as_mut())
             .flatten()
         {
             *idx -= 1;
@@ -63,7 +63,7 @@ impl CursorControl for SequenceRef<'_> {
         {
             if text_grapheme_count(text)
                 .checked_sub(1)
-                .map_or(true, |last_idx| last_idx == *text_idx)
+                .is_none_or(|last_idx| last_idx == *text_idx)
             {
                 true
             } else {

@@ -65,14 +65,12 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
         if let Some(Child::Atom(Atom::Text(text))) = insertion_idx
             .checked_sub(1)
             .and_then(|i| dst_children.get_mut(i))
-        {
-            if let Some(Child::Atom(Atom::Text(s))) =
+            && let Some(Child::Atom(Atom::Text(s))) =
                 children.pop_front_if(|child| matches!(child, Child::Atom(Atom::Text(_))))
             {
                 merged_left_graphemes = Some(text.graphemes(true).count());
                 text.push_str(&s);
             }
-        }
 
         for child in &children {
             match child {
@@ -127,10 +125,9 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
     if let Some(Child::Atom(Atom::Text(mut text))) = current_idx
         .checked_sub(1)
         .and_then(|i| dst_children.get(i).cloned())
-    {
-        if let Some(Child::Atom(Atom::Text(s))) = dst_children.get(current_idx) {
-            if !cursor_updated && parent_id == cursor.sequence_id() {
-                if let Some((child_idx, Some(text_idx))) = cursor.child_index()
+        && let Some(Child::Atom(Atom::Text(s))) = dst_children.get(current_idx) {
+            if !cursor_updated && parent_id == cursor.sequence_id()
+                && let Some((child_idx, Some(text_idx))) = cursor.child_index()
                     && child_idx == dst_idx + 1
                 {
                     *cursor = Cursor::new_raw(
@@ -142,9 +139,8 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
                     );
                     cursor_updated = true
                 }
-            }
 
-            text.push_str(&s);
+            text.push_str(s);
 
             dst_children.splice(
                 current_idx - 1..=current_idx,
@@ -152,7 +148,6 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
             );
             merged_right_text = true;
         }
-    }
 
     if !cursor_updated
         && parent_id == cursor.sequence_id()

@@ -13,7 +13,7 @@ impl Tree {
         assert!(
             self.sequences
                 .get(src)
-                .map_or(false, |seq| dest_index <= seq.children.len())
+                .is_some_and(|seq| dest_index <= seq.children.len())
         );
 
         let mut moved_children: Vec<_> = self

@@ -19,7 +19,7 @@ impl CursorControl for ContainerRef<'_> {
 
                     Some(sequence.rightmost_cursor())
                 } else {
-                    return None;
+                    None
                 }
             }
         }
@@ -57,7 +57,7 @@ impl CursorControl for ContainerRef<'_> {
                         child_index: Some((parent_index, None)),
                     })
                 } else {
-                    return None;
+                    None
                 }
             }
         }

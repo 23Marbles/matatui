@@ -42,8 +42,8 @@ impl Editor for RatatuiEditor {
 
     fn handle_event(&mut self, event: Self::Event) {
         let event = match event {
-            Event::Key(key_event) => {
-                if !key_event.is_release() {
+            Event::Key(key_event)
+                if !key_event.is_release() => {
                     match key_event.code {
                         KeyCode::Left => MatatreeEvent::MoveCursorLogical {
                             direction: CursorDirection::Left,
@@ -56,10 +56,7 @@ impl Editor for RatatuiEditor {
                         KeyCode::Delete => MatatreeEvent::Delete,
                         _ => return,
                     }
-                } else {
-                    return;
                 }
-            }
             _ => return,
         };
 

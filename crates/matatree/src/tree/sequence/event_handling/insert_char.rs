@@ -10,14 +10,16 @@ use crate::{
     },
 };
 
+type ChildFinder = Box<dyn FnMut(&Child) -> bool>;
+
 struct ContainerBlueprint {
     kind: ContainerKind,
     /// If some if there is a left id expecting everything up to the closest pattern before the insertion point
     /// The function is non-inclusive
     ///
-    left_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
+    left_id: Option<(SequenceId, ChildFinder)>,
     /// If some if there is a right id expecting everything up to the closest pattern after the insertion point
-    right_id: Option<(SequenceId, Box<dyn FnMut(&Child) -> bool>)>,
+    right_id: Option<(SequenceId, ChildFinder)>,
     /// Where to put the cursor after creation
     default_cursor_pos: Cursor,
 }
@@ -169,10 +171,8 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
 
     let child = if let Some(operator) = OperatorKind::from_char(ch) {
         Some(ChildCreator::Operator(operator))
-    } else if let Some(creator) = container_from_char(ch) {
-        Some(ChildCreator::Container(creator))
     } else {
-        None
+        container_from_char(ch).map(ChildCreator::Container)
     };
 
     match sequence.text_around_cursor(cursor.child_index()) {

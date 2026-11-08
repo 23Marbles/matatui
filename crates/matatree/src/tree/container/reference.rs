@@ -26,11 +26,7 @@ impl<'a> ContainerRef<'a> {
 
 impl Clone for ContainerRef<'_> {
     fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            tree: self.tree,
-            container: self.container,
-        }
+        *self
     }
 }
 
