@@ -963,3 +963,100 @@ fn assert_cursor_is_valid(tree: &Tree, cursor: Cursor) {
         }
     }
 }
+
+#[test]
+fn flatten_sequences_replaces_fraction_and_joins_text_on_both_sides() {
+    let (mut tree, container_id, numerator, denominator) = make_fraction(
+        false,
+        false,
+        vec![Atom::Text("L".into())],
+        vec![Atom::Text("R".into())],
+    );
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Text("N".into()));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Text("D".into()));
+    let mut cursor = Cursor::new_raw(numerator, None);
+
+    super::flatten::flatten_sequences(tree.get_mut_container(container_id).unwrap(), &mut cursor);
+
+    assert!(tree.get_container(container_id).is_none());
+    assert!(tree.get_sequence(numerator).is_none());
+    assert!(tree.get_sequence(denominator).is_none());
+    assert_eq!(
+        tree.root()
+            .children()
+            .into_iter()
+            .map(|child| match child {
+                ChildRef::Atom(atom) => atom.clone(),
+                ChildRef::Container(_) => panic!("flattened sequence retained a container"),
+            })
+            .collect::<Vec<_>>(),
+        vec![Atom::Text("LNDR".into())]
+    );
+}
+
+#[test]
+fn flatten_sequences_works_when_fraction_is_at_end_of_parent() {
+    let (mut tree, container_id, numerator, denominator) =
+        make_fraction(false, false, vec![Atom::Text("L".into())], vec![]);
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Text("N".into()));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Text("D".into()));
+    let mut cursor = Cursor::new_raw(numerator, None);
+
+    super::flatten::flatten_sequences(tree.get_mut_container(container_id).unwrap(), &mut cursor);
+
+    assert_eq!(
+        tree.root()
+            .children()
+            .into_iter()
+            .map(|child| match child {
+                ChildRef::Atom(atom) => atom.clone(),
+                ChildRef::Container(_) => panic!("flattened sequence retained a container"),
+            })
+            .collect::<Vec<_>>(),
+        vec![Atom::Text("LND".into())]
+    );
+}
+
+#[test]
+fn flatten_sequences_maps_cursor_to_first_child_without_left_neighbor() {
+    let (mut tree, container_id, numerator, _) = make_fraction(false, false, vec![], vec![]);
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Text("N".into()));
+    let mut cursor = Cursor::new_raw(numerator, Some((0, Some(0))));
+
+    super::flatten::flatten_sequences(tree.get_mut_container(container_id).unwrap(), &mut cursor);
+
+    assert_eq!(cursor.sequence_id(), tree.root_id());
+    assert_eq!(cursor.child_index(), Some((0, Some(0))));
+}
+
+#[test]
+fn flatten_sequences_maps_parent_cursor_when_right_text_is_joined() {
+    let (mut tree, container_id, numerator, denominator) = make_fraction(
+        false,
+        false,
+        vec![Atom::Text("L".into())],
+        vec![Atom::Text("R".into())],
+    );
+    tree.get_mut_sequence(numerator)
+        .unwrap()
+        .add_atom(Atom::Text("N".into()));
+    tree.get_mut_sequence(denominator)
+        .unwrap()
+        .add_atom(Atom::Text("D".into()));
+    let mut cursor = Cursor::new_raw(tree.root_id(), Some((2, Some(0))));
+
+    super::flatten::flatten_sequences(tree.get_mut_container(container_id).unwrap(), &mut cursor);
+
+    assert_eq!(cursor.sequence_id(), tree.root_id());
+    assert_eq!(cursor.child_index(), Some((0, Some(3))));
+}

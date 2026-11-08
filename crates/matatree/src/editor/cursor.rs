@@ -21,7 +21,7 @@ pub trait CursorControl {
     fn rightmost_cursor(&self) -> Cursor;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 /// The cursor which edits a `Tree`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Cursor {

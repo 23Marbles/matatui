@@ -55,6 +55,39 @@ impl SequenceMut<'_> {
                 let _ = join_text_children(&mut self.children, child_idx);
             }
             event::Event::InsertChar(ch) => insert_char::handle(self, ch, cursor),
+            event::Event::Delete => {
+                let Some(next_cursor) = self.as_ref().move_right(*cursor) else {
+                    return;
+                };
+
+                if next_cursor.sequence_id() != self.id() {
+                    *cursor = next_cursor;
+                    return;
+                }
+
+                let context = self.text_around_cursor(cursor.child_index());
+
+                let Some(remove_idx) = (match context {
+                    text::CursorTextMut::MutText {
+                        child_idx,
+                        cursor_idx,
+                        text,
+                    } => {
+                        if let Some((cursor_idx, g)) = text.grapheme_indices(true).nth(cursor_idx) {
+                            text.drain(cursor_idx..cursor_idx + g.len());
+
+                            text.is_empty().then_some(child_idx)
+                        } else {
+                            Some(child_idx)
+                        }
+                    }
+                    text::CursorTextMut::NoText { child_idx } => Some(child_idx),
+                }) else {
+                    return;
+                };
+
+                self.children.remove(remove_idx);
+            }
         }
     }
 }
