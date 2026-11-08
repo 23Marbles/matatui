@@ -1,1 +1,1 @@
-cargo run -p ratatui_showcase -- ./apps/debug/debug_save.ron
+cargo run -p matatree-tui --example editor

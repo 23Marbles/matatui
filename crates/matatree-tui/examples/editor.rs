@@ -1,32 +1,9 @@
-use std::{fs, path::PathBuf};
-
-use clap::Parser;
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use matatree::editor::{CursoredTree, Editor};
 use matatree_tui::RatatuiEditor;
-
-#[derive(Debug, clap::Parser)]
-struct Args {
-    load_path: PathBuf,
-}
+use ratatui::crossterm::event::{self, Event, KeyCode, KeyEvent};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::builder()
-        .filter(Some("matatree::tree::container"), log::LevelFilter::Debug)
-        .target(env_logger::Target::Pipe(Box::new(
-            fs::OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .create(true)
-                .open("./ratatui_showcase_log")?,
-        )))
-        .init();
-
-    let args = Args::parse();
-
-    let tree: CursoredTree = ron::from_str(&fs::read_to_string(args.load_path)?)?;
-
-    let mut editor = RatatuiEditor::from_tree(tree);
+    let mut editor = RatatuiEditor::from_tree(CursoredTree::default());
 
     ratatui::run(|terminal| {
         loop {

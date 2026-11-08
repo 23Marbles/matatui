@@ -3637,21 +3637,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ratatui_showcase"
-version = "0.1.0"
-dependencies = [
- "clap",
- "crossterm",
- "env_logger",
- "log",
- "matatree",
- "matatree-tui",
- "ratatui",
- "ron",
- "serde",
-]
-
-[[package]]
 name = "raw-window-handle"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
