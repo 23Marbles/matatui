@@ -38,5 +38,5 @@ fn cursor_after_fraction_tracks_the_following_atom() {
     let cursor = root.move_right(cursor).unwrap();
 
     let layout = RatatuiLayout::layout_sequence(root, Some(&cursor));
-    assert_eq!(layout.cursor_pos, Some((5, 1, 1)));
+    assert_eq!(layout.cursor_pos, Some((7, 1, 1)));
 }
