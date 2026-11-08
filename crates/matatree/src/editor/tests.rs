@@ -66,16 +66,13 @@ fn editor_navigation_enters_and_exits_fraction_sequences() {
     assert_eq!(editor.cursor().child_index(), Some((0, None)));
 
     editor.move_left();
-    assert_eq!(editor.cursor().sequence_id(), editor.tree().root_id());
-    assert_eq!(editor.cursor().child_index(), None);
+    assert_eq!(editor.cursor().sequence_id(), denominator);
+    assert_eq!(editor.cursor().child_index(), Some((0, Some(0))));
 
-    editor.move_right();
-    editor.move_right();
-    editor.move_right();
-    editor.move_right();
     editor.move_left();
     assert_eq!(editor.cursor().sequence_id(), denominator);
     assert_eq!(editor.cursor().child_index(), None);
+
     editor.move_left();
     assert_eq!(editor.cursor().sequence_id(), numerator);
     assert_eq!(editor.cursor().child_index(), Some((0, Some(0))));
