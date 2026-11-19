@@ -1,9 +1,6 @@
 use matatree_data::numeric::Number;
 
-use crate::node::{nodeview::{
-    NodeView,},
-    mapping::{DataMap, DataMapSetUnknowns, DataMapView},
-};
+use crate::node::node_view::NodeView;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq, Clone, Hash)]
 pub enum SolutionError {}

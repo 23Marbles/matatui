@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Cursor Movement.md",
+                "file": "Ast/Symbolic.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Cursor Movement"
+              "title": "Symbolic"
             }
           }
         ]
@@ -191,12 +191,12 @@
   },
   "active": "89bc516948f59030",
   "lastOpenFiles": [
+    "Cursor Movement.md",
     "Rendering.md",
     "Selection.md",
     "Partial Containers.md",
     "Layout.md",
     "Event Handling.md",
-    "Debugger.md",
-    "Cursor Movement.md"
+    "Debugger.md"
   ]
 }

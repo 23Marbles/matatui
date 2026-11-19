@@ -3,8 +3,20 @@ use crate::node::Node;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Operation {
-    Sum { nodes: Vec<Node> },
-    Product { nodes: Vec<Node> },
+    Sum {
+        nodes: Vec<Node>,
+    },
+    Product {
+        nodes: Vec<Node>,
+    },
+    Division {
+        numerator: Box<Node>,
+        denominator: Box<Node>,
+    },
+    Subtraction {
+        lhs: Box<Node>,
+        rhs: Box<Node>,
+    },
 }
 
 pub enum OperationOrder {
@@ -16,8 +28,34 @@ pub enum OperationOrder {
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum OperationKind {
-    Multiplication = 1,
-    Summation = 0,
+    Multiplication,
+    Division,
+    Summation,
+    Subtraction,
+}
+
+impl OperationKind {
+    /// When self should be evaluated in reference to other
+    pub fn order(&self, other: Self) -> OperationOrder {
+        match (self, other) {
+            (
+                OperationKind::Subtraction | OperationKind::Summation,
+                OperationKind::Division | OperationKind::Multiplication,
+            ) => OperationOrder::After,
+            (
+                OperationKind::Division | OperationKind::Multiplication,
+                OperationKind::Division | OperationKind::Multiplication,
+            )
+            | (
+                OperationKind::Subtraction | OperationKind::Summation,
+                OperationKind::Subtraction | OperationKind::Summation,
+            ) => OperationOrder::SameTime,
+            (
+                OperationKind::Division | OperationKind::Multiplication,
+                OperationKind::Subtraction | OperationKind::Summation,
+            ) => OperationOrder::After,
+        }
+    }
 }
 
 impl Operation {
@@ -25,14 +63,13 @@ impl Operation {
         match self {
             Operation::Sum { .. } => OperationKind::Summation,
             Operation::Product { .. } => OperationKind::Multiplication,
+            Operation::Division { .. } => OperationKind::Division,
+            Operation::Subtraction { .. } => OperationKind::Subtraction,
         }
     }
 
+    /// When self should be evaluated in reference to other
     pub fn operation_order(&self, other: &Self) -> OperationOrder {
-        match self.operation_kind().cmp(&other.operation_kind()) {
-            std::cmp::Ordering::Less => OperationOrder::After,
-            std::cmp::Ordering::Equal => OperationOrder::SameTime,
-            std::cmp::Ordering::Greater => OperationOrder::Before,
-        }
+        self.operation_kind().order(other.operation_kind())
     }
 }

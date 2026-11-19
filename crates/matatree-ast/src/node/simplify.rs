@@ -1,4 +1,4 @@
-use crate::node::nodeview::NodeViewOwned;
+use crate::node::node_view::NodeViewOwned;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SimplifyError {}

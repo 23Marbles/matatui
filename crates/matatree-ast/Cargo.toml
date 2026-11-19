@@ -7,3 +7,8 @@ edition = "2024"
 num-rational = "0.4.2"
 matatree-data = { path = "../matatree-data" }
 thiserror = "2.0.21"
+serde = { version = "1.0.229", optional = true }
+slotmap = "1.1.1"
+
+[features]
+serde = ["dep:serde", "slotmap/serde"]

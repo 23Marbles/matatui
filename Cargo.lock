@@ -2408,6 +2408,8 @@ version = "0.1.0"
 dependencies = [
  "matatree-data",
  "num-rational",
+ "serde",
+ "slotmap",
  "thiserror 2.0.21",
 ]
 
@@ -2418,6 +2420,8 @@ dependencies = [
  "num-bigint",
  "num-rational",
  "num-traits",
+ "serde",
+ "slotmap",
 ]
 
 [[package]]

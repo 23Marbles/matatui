@@ -1,5 +1,12 @@
-use crate::numeric::Number;
+use slotmap::SlotMap;
 
+use crate::{
+    identifier::{SymbolId, SymbolicIdent},
+    numeric::Number,
+};
+
+pub mod identifier;
+pub mod mapping;
 pub mod numeric;
 
 /// Data is what is stored in variables,
@@ -7,11 +14,13 @@ pub mod numeric;
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum DataKind {
     Number(Number),
+    Unknown,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Data {
     kind: DataKind,
+    ident: SymbolicIdent,
 }
 
 impl Data {

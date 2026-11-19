@@ -7,3 +7,8 @@ edition = "2024"
 num-bigint = "0.4"
 num-rational = "0.4.2"
 num-traits = "0.2.19"
+serde = { version = "1.0.229", optional = true }
+slotmap = "1.1.1"
+
+[features]
+serde = ["dep:serde", "slotmap/serde"]
