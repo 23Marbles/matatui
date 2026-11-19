@@ -98,10 +98,10 @@ impl LayoutEngine for RatatuiLayout {
 
             if let Some((cursor_idx, text_idx)) = cursor_child {
                 if cursor_idx == idx {
-                    let text_offset = match (&res.kind, text_idx) {
-                        (NodeKindRef::Text(_), Some(text_idx)) => text_idx as i16,
-                        (NodeKindRef::Text(_), None) => 0,
-                        (NodeKindRef::Operator(_), _) => {
+                    let (x_text_offset, y_text_offset, height) = match (&res.kind, text_idx) {
+                        (NodeKindRef::Text(_), Some(text_idx)) => (text_idx as i16, None, 1),
+                        (NodeKindRef::Text(_), None) => (0, None, 1),
+                        (NodeKindRef::Operator(_), _) => (
                             if let Some(
                                 ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
                             ) = cursor_idx
@@ -111,9 +111,11 @@ impl LayoutEngine for RatatuiLayout {
                                 0
                             } else {
                                 1
-                            }
-                        }
-                        (NodeKindRef::Fraction { .. }, _) => {
+                            },
+                            None,
+                            1,
+                        ),
+                        (NodeKindRef::Fraction { .. }, _) => (
                             if let Some(
                                 ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
                             ) = cursor_idx
@@ -123,15 +125,21 @@ impl LayoutEngine for RatatuiLayout {
                                 res.measurement.width.saturating_sub(1)
                             } else {
                                 res.measurement.width
-                            }
-                        }
+                            },
+                            Some(measurement.ascent - res.measurement.ascent),
+                            res.measurement.height(),
+                        ),
                         (NodeKindRef::Sequence(_), _) => {
                             unreachable!("Sequence cannot be a child of a sequence")
                         }
                     };
-                    cursor_pos = current_x_pos
-                        .checked_add(text_offset)
-                        .and_then(|x| Some((x.checked_add(1)?, measurement.ascent - 1, 1)));
+                    cursor_pos = current_x_pos.checked_add(x_text_offset).and_then(|x| {
+                        Some((
+                            x.checked_add(1)?,
+                            y_text_offset.unwrap_or(measurement.ascent - 1),
+                            height,
+                        ))
+                    });
                 }
             } else if !this_sequence_highlighted {
                 cursor_pos = cursor_pos.or_else(|| {
