@@ -6,7 +6,7 @@ use num_bigint::BigInt;
 pub use num_rational::BigRational;
 use num_traits::{ConstOne, ConstZero, Num, One, Signed, Zero};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum NumberState {
     /// A number state indicating that this is only an approximation rather than a real value
     /// This can be caused square roots etc
@@ -24,7 +24,7 @@ impl NumberState {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Number {
     value: BigRational,
     state: NumberState,

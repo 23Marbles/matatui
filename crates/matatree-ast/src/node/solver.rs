@@ -1,7 +1,7 @@
 use matatree_data::numeric::Number;
 
-use crate::symbolic::{
-    SymbolicReprRef,
+use crate::node::{nodeview::{
+    NodeView,},
     mapping::{DataMap, DataMapSetUnknowns, DataMapView},
 };
 
@@ -14,7 +14,7 @@ pub struct Solution {
     data_map: DataMap,
 }
 
-impl SymbolicReprRef<'_> {
+impl NodeView<'_> {
     pub fn solve_variables(&self, variables: DataMapSetUnknowns) -> Result<(), SolutionError> {
         let _ = variables;
 

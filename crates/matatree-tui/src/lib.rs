@@ -42,21 +42,18 @@ impl Editor for RatatuiEditor {
 
     fn handle_event(&mut self, event: Self::Event) {
         let event = match event {
-            Event::Key(key_event)
-                if !key_event.is_release() => {
-                    match key_event.code {
-                        KeyCode::Left => MatatreeEvent::MoveCursorLogical {
-                            direction: CursorDirection::Left,
-                        },
-                        KeyCode::Right => MatatreeEvent::MoveCursorLogical {
-                            direction: CursorDirection::Right,
-                        },
-                        KeyCode::Backspace => MatatreeEvent::Backspace,
-                        KeyCode::Char(ch) => MatatreeEvent::InsertChar(ch),
-                        KeyCode::Delete => MatatreeEvent::Delete,
-                        _ => return,
-                    }
-                }
+            Event::Key(key_event) if !key_event.is_release() => match key_event.code {
+                KeyCode::Left => MatatreeEvent::MoveCursorLogical {
+                    direction: CursorDirection::Left,
+                },
+                KeyCode::Right => MatatreeEvent::MoveCursorLogical {
+                    direction: CursorDirection::Right,
+                },
+                KeyCode::Backspace => MatatreeEvent::Backspace,
+                KeyCode::Char(ch) => MatatreeEvent::InsertChar(ch),
+                KeyCode::Delete => MatatreeEvent::Delete,
+                _ => return,
+            },
             _ => return,
         };
 

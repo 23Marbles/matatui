@@ -1,9 +1,9 @@
-use crate::symbolic::SymbolicRepr;
+use crate::node::nodeview::NodeViewOwned;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SimplifyError {}
 
-impl SymbolicRepr {
+impl NodeViewOwned {
     pub fn simplify(&mut self) -> Result<(), SimplifyError> {
         todo!("Implement solving")
     }

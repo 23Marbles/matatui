@@ -1,5 +1,7 @@
 use crate::node::Node;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum Operation {
     Sum { nodes: Vec<Node> },
     Product { nodes: Vec<Node> },
@@ -12,6 +14,7 @@ pub enum OperationOrder {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[non_exhaustive]
 pub enum OperationKind {
     Multiplication = 1,
     Summation = 0,
