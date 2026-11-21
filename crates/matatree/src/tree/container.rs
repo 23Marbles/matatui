@@ -4,31 +4,63 @@ mod event_handling;
 mod mutable;
 mod reference;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ContainerKind {
-    Fraction {
-        numerator: SequenceId,
-        denominator: SequenceId,
-    },
-}
-
-impl ContainerKind {
-    pub fn fraction(seq_ids: [SequenceId; 2]) -> Self {
-        Self::Fraction {
-            numerator: seq_ids[0],
-            denominator: seq_ids[1],
+macro_rules! container_kind {
+    ($($func_name:ident([$count:literal]) -> $variant_name:ident {$($sequence_var_name:ident,)* };)*) => {
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        pub enum ContainerKind {
+            $(
+                $variant_name {
+                    $(
+                        $sequence_var_name: SequenceId,
+                    )*
+                },
+            )*
         }
-    }
+
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        pub enum OwnedContainerKind {
+            $(
+                $variant_name {
+                    $(
+                        $sequence_var_name: OwnedSequence,
+                    )*
+                },
+            )*
+        }
+
+
+        impl ContainerKind {
+            $(
+                pub fn $func_name(seq_ids: [SequenceId; $count]) -> Self {
+                    let mut ids = seq_ids.into_iter();
+
+                    Self::$variant_name {
+                        $(
+                            $sequence_var_name: ids.next()
+                                .expect(
+                                    stringify!(Supplied count should match number of variables in macro for $func_name)
+                                ),
+                        )*
+                    }
+                }
+            )*
+        }
+    };
 }
 
-#[derive(Debug, Clone)]
-pub enum OwnedContainerKind {
-    Fraction {
-        numerator: OwnedSequence,
-        denominator: OwnedSequence,
-    },
-}
+container_kind!(
+    fraction([2]) -> Fraction {
+        numerator, denominator,
+    };
+    sub_script([1]) -> SubScript {
+        sequence,
+    };
+    super_script([1]) -> SuperScript {
+        sequence,
+    };
+);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -66,5 +98,6 @@ pub struct ContainerMut<'a> {
     /// Mutating tree must not allow `Self::id` to become invalid
     pub(super) tree: &'a mut Tree,
 }
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OwnedContainer(pub OwnedContainerKind);

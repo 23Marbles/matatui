@@ -176,6 +176,24 @@ impl LayoutEngine for RatatuiLayout {
                 numerator,
                 denominator,
             } => fraction::layout_fraction(container, cursor, numerator, denominator),
+            ContainerKind::SubScript { sequence } => {
+                let mut result =
+                    Self::layout_sequence(container.tree().get_sequence(sequence).unwrap(), cursor);
+
+                result.measurement.ascent = result.measurement.height();
+                result.measurement.descent = 0;
+
+                result
+            }
+            ContainerKind::SuperScript { sequence } => {
+                let mut result =
+                    Self::layout_sequence(container.tree().get_sequence(sequence).unwrap(), cursor);
+
+                result.measurement.descent += result.measurement.height();
+                result.measurement.ascent = 0;
+
+                result
+            }
         }
     }
 }

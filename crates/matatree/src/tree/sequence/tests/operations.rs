@@ -19,7 +19,10 @@ fn insertion_sets_fraction_sequence_parents_and_checks_index() {
             .get_container(container_id)
             .unwrap()
             .kind()
-            .clone();
+            .clone()
+        else {
+            panic!("Expected fraction")
+        };
         assert!(
             root.insert_container(3, |[numerator, denominator]| {
                 ContainerKind::fraction([numerator, denominator])
@@ -123,7 +126,10 @@ fn deleting_container_child_removes_its_subsequences() {
         let ContainerKind::Fraction {
             numerator,
             denominator,
-        } = root.tree().get_container(id).unwrap().kind().clone();
+        } = root.tree().get_container(id).unwrap().kind().clone()
+        else {
+            panic!("Expected fraction")
+        };
         (id, numerator, denominator)
     };
 

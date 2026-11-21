@@ -22,14 +22,15 @@ impl<'a> ContainerMut<'a> {
     }
 
     pub fn delete(self) -> OwnedContainer {
-        OwnedContainer(match self.kind {
+        let kind = self.kind.clone();
+        let parent_id = self.parent_id();
+        let tree = self.tree;
+
+        let owned = OwnedContainer(match kind {
             ContainerKind::Fraction {
                 numerator,
                 denominator,
             } => {
-                let parent_id = self.parent_id();
-                let tree = self.tree;
-
                 let kind = OwnedContainerKind::Fraction {
                     numerator: tree.get_mut_sequence(numerator).unwrap().clear(),
                     denominator: tree.get_mut_sequence(denominator).unwrap().clear(),
@@ -38,20 +39,38 @@ impl<'a> ContainerMut<'a> {
                 tree.sequences.remove(numerator);
                 tree.sequences.remove(denominator);
 
-                let id = self.id;
-                let mut parent = tree.get_mut_sequence(parent_id).unwrap();
-
-                for (i, ch) in parent.children.iter().enumerate() {
-                    if ch == &Child::Container(id) {
-                        parent.children.remove(i);
-                        break;
-                    }
-                }
-
-                tree.containers.remove(id);
                 kind
             }
-        })
+            ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+                let kind = match kind {
+                    ContainerKind::SubScript { .. } => OwnedContainerKind::SubScript {
+                        sequence: tree.get_mut_sequence(sequence).unwrap().clear(),
+                    },
+                    ContainerKind::SuperScript { .. } => OwnedContainerKind::SuperScript {
+                        sequence: tree.get_mut_sequence(sequence).unwrap().clear(),
+                    },
+                    _ => unreachable!("Only matches the two previous branches"),
+                };
+
+                tree.sequences.remove(sequence);
+
+                kind
+            }
+        });
+
+        let id = self.id;
+        let mut parent = tree.get_mut_sequence(parent_id).unwrap();
+
+        for (i, ch) in parent.children.iter().enumerate() {
+            if ch == &Child::Container(id) {
+                parent.children.remove(i);
+                break;
+            }
+        }
+
+        tree.containers.remove(id);
+
+        owned
     }
 
     pub fn into_tree_mut(self) -> &'a mut Tree {

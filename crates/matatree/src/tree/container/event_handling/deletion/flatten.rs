@@ -15,25 +15,28 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
         tree,
     } = container;
 
-    let dst_idx = {
-        let children = &mut tree.sequences.get_mut(parent_id).unwrap().children;
+    let dst_idx =
+        {
+            let children = &mut tree.sequences.get_mut(parent_id).unwrap().children;
 
-        let idx = children.iter()
-        .enumerate()
-        .find(|(_, c)| matches!(c, Child::Container(container_id) if *container_id == container.id))
+            let idx = children.iter()
+        .position(|c| matches!(c, Child::Container(container_id) if *container_id == container.id))
         .unwrap()
-        .0;
+        ;
 
-        children.remove(idx);
+            children.remove(idx);
 
-        idx
-    };
+            idx
+        };
 
     let sequences = match tree.containers.remove(container_id).unwrap().kind {
         ContainerKind::Fraction {
             numerator,
             denominator,
         } => vec![numerator, denominator],
+        ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+            vec![sequence]
+        }
     };
 
     let mut current_idx = dst_idx;
@@ -67,10 +70,10 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
             .and_then(|i| dst_children.get_mut(i))
             && let Some(Child::Atom(Atom::Text(s))) =
                 children.pop_front_if(|child| matches!(child, Child::Atom(Atom::Text(_))))
-            {
-                merged_left_graphemes = Some(text.graphemes(true).count());
-                text.push_str(&s);
-            }
+        {
+            merged_left_graphemes = Some(text.graphemes(true).count());
+            text.push_str(&s);
+        }
 
         for child in &children {
             match child {
@@ -125,29 +128,31 @@ pub(super) fn flatten_sequences(container: ContainerMut<'_>, cursor: &mut Cursor
     if let Some(Child::Atom(Atom::Text(mut text))) = current_idx
         .checked_sub(1)
         .and_then(|i| dst_children.get(i).cloned())
-        && let Some(Child::Atom(Atom::Text(s))) = dst_children.get(current_idx) {
-            if !cursor_updated && parent_id == cursor.sequence_id()
-                && let Some((child_idx, Some(text_idx))) = cursor.child_index()
-                    && child_idx == dst_idx + 1
-                {
-                    *cursor = Cursor::new_raw(
-                        parent_id,
-                        Some((
-                            current_idx - 1,
-                            Some(text_idx + text.graphemes(true).count()),
-                        )),
-                    );
-                    cursor_updated = true
-                }
-
-            text.push_str(s);
-
-            dst_children.splice(
-                current_idx - 1..=current_idx,
-                core::iter::once(Child::Atom(Atom::Text(text))),
+        && let Some(Child::Atom(Atom::Text(s))) = dst_children.get(current_idx)
+    {
+        if !cursor_updated
+            && parent_id == cursor.sequence_id()
+            && let Some((child_idx, Some(text_idx))) = cursor.child_index()
+            && child_idx == dst_idx + 1
+        {
+            *cursor = Cursor::new_raw(
+                parent_id,
+                Some((
+                    current_idx - 1,
+                    Some(text_idx + text.graphemes(true).count()),
+                )),
             );
-            merged_right_text = true;
+            cursor_updated = true
         }
+
+        text.push_str(s);
+
+        dst_children.splice(
+            current_idx - 1..=current_idx,
+            core::iter::once(Child::Atom(Atom::Text(text))),
+        );
+        merged_right_text = true;
+    }
 
     if !cursor_updated
         && parent_id == cursor.sequence_id()

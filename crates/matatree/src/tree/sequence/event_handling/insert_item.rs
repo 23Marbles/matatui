@@ -3,7 +3,10 @@ use std::iter::repeat_n;
 use slotmap::SlotMap;
 
 use crate::{
-    editor::cursor::{Cursor, CursorControl},
+    editor::{
+        cursor::{Cursor, CursorControl},
+        event::InsertItem,
+    },
     tree::{
         Atom, Child, Container, ContainerKind, OperatorKind, Sequence, SequenceId, SequenceMut,
         sequence::text::CursorTextMut,
@@ -11,6 +14,10 @@ use crate::{
 };
 
 type ChildFinder = Box<dyn FnMut(&Child) -> bool>;
+
+fn until_operator_child_finder() -> ChildFinder {
+    Box::new(|child| matches!(child, Child::Atom(Atom::Operator(_))))
+}
 
 struct ContainerBlueprint {
     kind: ContainerKind,
@@ -145,34 +152,50 @@ impl ContainerCreator {
     }
 }
 
-fn container_from_char(ch: char) -> Option<ContainerCreator> {
-    match ch {
-        '/' => Some(ContainerCreator::new(
-            ContainerKind::fraction,
-            |kind, ids| ContainerBlueprint {
+impl ContainerCreator {
+    fn fraction() -> ContainerCreator {
+        ContainerCreator::new(ContainerKind::fraction, |kind, ids| ContainerBlueprint {
+            kind,
+            left_id: Some((ids[0], until_operator_child_finder())),
+            right_id: None,
+            default_cursor_pos: Cursor::new_raw(ids[1], None),
+        })
+    }
+
+    fn super_script() -> ContainerCreator {
+        ContainerCreator::new(ContainerKind::super_script, |kind, ids| {
+            ContainerBlueprint {
                 kind,
-                left_id: Some((
-                    ids[0],
-                    Box::new(|child| matches!(child, Child::Atom(Atom::Operator(_)))),
-                )),
+                left_id: None,
                 right_id: None,
-                default_cursor_pos: Cursor::new_raw(ids[1], None),
-            },
-        )),
-        _ => None,
+                default_cursor_pos: Cursor::new_raw(ids[0], None),
+            }
+        })
+    }
+
+    fn sub_script() -> ContainerCreator {
+        ContainerCreator::new(ContainerKind::sub_script, |kind, ids| ContainerBlueprint {
+            kind,
+            left_id: None,
+            right_id: None,
+            default_cursor_pos: Cursor::new_raw(ids[0], None),
+        })
     }
 }
 
-pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Cursor) {
+pub(super) fn handle(sequence: &mut SequenceMut<'_>, item: InsertItem, cursor: &mut Cursor) {
     enum ChildCreator {
         Operator(OperatorKind),
         Container(ContainerCreator),
+        Char(char),
     }
 
-    let child = if let Some(operator) = OperatorKind::from_char(ch) {
-        Some(ChildCreator::Operator(operator))
-    } else {
-        container_from_char(ch).map(ChildCreator::Container)
+    let child = match item {
+        InsertItem::Fraction => ChildCreator::Container(ContainerCreator::fraction()),
+        InsertItem::SuperScript => ChildCreator::Container(ContainerCreator::super_script()),
+        InsertItem::SubScript => ChildCreator::Container(ContainerCreator::sub_script()),
+        InsertItem::Operator(operator_kind) => ChildCreator::Operator(operator_kind),
+        InsertItem::Char(ch) => ChildCreator::Char(ch),
     };
 
     match sequence.text_around_cursor(cursor.child_index()) {
@@ -180,8 +203,11 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
             child_idx,
             cursor_idx,
             text,
-        } => {
-            if let Some(child) = child {
+        } => match child {
+            ChildCreator::Char(ch) => {
+                text.insert(cursor_idx, ch);
+            }
+            child => {
                 let offset = if cursor_idx == 0 {
                     0
                 } else {
@@ -202,26 +228,25 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, ch: char, cursor: &mut Curs
                         container_creator.insert(sequence, child_idx + offset, cursor);
                         return;
                     }
+                    ChildCreator::Char(_) => unreachable!("Already matched this branch"),
                 }
-            } else {
-                text.insert(cursor_idx, ch);
             }
-        }
-        CursorTextMut::NoText { child_idx } => {
-            if let Some(child) = child {
-                match child {
-                    ChildCreator::Operator(operator_kind) => sequence
-                        .children
-                        .insert(child_idx, Child::Atom(Atom::Operator(operator_kind))),
-                    ChildCreator::Container(container_creator) => {
-                        container_creator.insert(sequence, child_idx, cursor);
-                        return;
-                    }
-                }
-            } else {
+        },
+        CursorTextMut::NoText { child_idx } => match child {
+            ChildCreator::Char(ch) => {
                 sequence.insert_atom(child_idx, Atom::Text(ch.to_string()));
             }
-        }
+            child => match child {
+                ChildCreator::Operator(operator_kind) => sequence
+                    .children
+                    .insert(child_idx, Child::Atom(Atom::Operator(operator_kind))),
+                ChildCreator::Container(container_creator) => {
+                    container_creator.insert(sequence, child_idx, cursor);
+                    return;
+                }
+                ChildCreator::Char(_) => unreachable!("Already matched this branch"),
+            },
+        },
     }
 
     *cursor = sequence.as_ref().move_right(*cursor).unwrap();

@@ -24,6 +24,9 @@ fn renders_fraction_and_surrounding_atoms_on_expected_rows() {
             numerator,
             denominator,
         } => (*numerator, *denominator),
+        _ => {
+            panic!("Expected fraction")
+        }
     };
     tree.get_mut_sequence(numerator)
         .unwrap()
@@ -55,4 +58,55 @@ fn renders_fraction_and_surrounding_atoms_on_expected_rows() {
     ] {
         assert_eq!(buf.cell((x, y)).unwrap().symbol(), expected);
     }
+}
+
+#[test]
+fn renders_subscript_below_and_superscript_above_the_baseline() {
+    let mut subscript_tree = Tree::new();
+    let subscript_id = subscript_tree
+        .get_mut_sequence(subscript_tree.root_id())
+        .unwrap()
+        .add_container(|[sequence]| ContainerKind::sub_script([sequence]))
+        .unwrap();
+    let subscript_sequence = match subscript_tree.get_container(subscript_id).unwrap().kind() {
+        ContainerKind::SubScript { sequence } => *sequence,
+        _ => panic!("Expected subscript"),
+    };
+    subscript_tree
+        .get_mut_sequence(subscript_sequence)
+        .unwrap()
+        .add_atom(Atom::Text("2".into()));
+    let subscript_layout = RatatuiLayout::layout_sequence(subscript_tree.root(), None);
+    let mut subscript_buf = ratatui::buffer::Buffer::empty(Rect::new(0, 0, 5, 3));
+    RatatuiRender::render_layout(
+        subscript_layout,
+        Rect::new(0, 0, 5, 3),
+        &mut subscript_buf,
+        &RenderContext::none(),
+    );
+    assert_eq!(subscript_buf.cell((0, 1)).unwrap().symbol(), "2");
+
+    let mut superscript_tree = Tree::new();
+    let superscript_id = superscript_tree
+        .get_mut_sequence(superscript_tree.root_id())
+        .unwrap()
+        .add_container(|[sequence]| ContainerKind::super_script([sequence]))
+        .unwrap();
+    let superscript_sequence = match superscript_tree.get_container(superscript_id).unwrap().kind() {
+        ContainerKind::SuperScript { sequence } => *sequence,
+        _ => panic!("Expected superscript"),
+    };
+    superscript_tree
+        .get_mut_sequence(superscript_sequence)
+        .unwrap()
+        .add_atom(Atom::Text("3".into()));
+    let superscript_layout = RatatuiLayout::layout_sequence(superscript_tree.root(), None);
+    let mut superscript_buf = ratatui::buffer::Buffer::empty(Rect::new(0, 0, 5, 3));
+    RatatuiRender::render_layout(
+        superscript_layout,
+        Rect::new(0, 0, 5, 3),
+        &mut superscript_buf,
+        &RenderContext::none(),
+    );
+    assert_eq!(superscript_buf.cell((0, 0)).unwrap().symbol(), "3");
 }

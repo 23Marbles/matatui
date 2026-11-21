@@ -57,11 +57,15 @@ fn moving_children_updates_nested_container_parent() {
             .add_container(|[n, d]| ContainerKind::fraction([n, d]))
             .unwrap();
         let ContainerKind::Fraction { numerator, .. } =
-            root.tree().get_container(first).unwrap().kind().clone();
+            root.tree().get_container(first).unwrap().kind().clone()
+        else {
+            panic!("Expected fraction")
+        };
         (first, second, numerator)
     };
     let second_numerator = match tree.get_container(second).unwrap().kind() {
         ContainerKind::Fraction { numerator, .. } => *numerator,
+        _ => panic!("Expected fraction"),
     };
     assert_eq!(
         tree.get_container(first).unwrap().parent_id(),

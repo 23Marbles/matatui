@@ -37,5 +37,6 @@ pub struct SequenceMut<'a> {
     tree: &'a mut Tree,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OwnedSequence(pub Vec<OwnedChild>);

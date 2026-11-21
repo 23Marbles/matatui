@@ -123,14 +123,14 @@ pub fn debug_sequence(
                                             )
                                             .changed()
                                             && let Some(ch) = value.chars().next()
-                                                && let Some(kind) = OperatorKind::from_char(ch)
-                                            {
-                                                edits.push(TreeEdit::ReplaceAtom {
-                                                    parent: sequence.id(),
-                                                    index,
-                                                    atom: Atom::Operator(kind),
-                                                });
-                                            }
+                                            && let Some(kind) = OperatorKind::from_char(ch)
+                                        {
+                                            edits.push(TreeEdit::ReplaceAtom {
+                                                parent: sequence.id(),
+                                                index,
+                                                atom: Atom::Operator(kind),
+                                            });
+                                        }
 
                                         if ui.small_button("×").clicked() {
                                             atom_buffers.remove(&key);

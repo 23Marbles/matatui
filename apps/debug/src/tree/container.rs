@@ -31,6 +31,20 @@ pub fn debug_container(
                 ),
             ],
         ),
+        matatree::tree::ContainerKind::SubScript { sequence } => (
+            "Sub Script",
+            vec![(
+                "Sequence".to_string(),
+                container.tree().get_sequence(*sequence).unwrap(),
+            )],
+        ),
+        matatree::tree::ContainerKind::SuperScript { sequence } => (
+            "Super Script",
+            vec![(
+                "Sequence".to_string(),
+                container.tree().get_sequence(*sequence).unwrap(),
+            )],
+        ),
     };
 
     let mut header_edits = Vec::new();
@@ -78,6 +92,11 @@ fn remove_container_atom_buffers(
                 atom_buffers,
             );
         }
+        matatree::tree::ContainerKind::SubScript { sequence }
+        | matatree::tree::ContainerKind::SuperScript { sequence } => remove_sequence_atom_buffers(
+            container.tree().get_sequence(*sequence).unwrap(),
+            atom_buffers,
+        ),
     }
 }
 

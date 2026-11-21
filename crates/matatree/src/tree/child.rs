@@ -8,27 +8,28 @@ pub(super) fn join_text_children(children: &mut Vec<Child>, join_seam: usize) ->
         .checked_sub(1)
         .and_then(|index| children.get(index))
         && let Some(after) = children.get(join_seam)
-        && matches!(prev, Child::Atom(Atom::Text(_))) && matches!(after, Child::Atom(Atom::Text(_)))
-        {
-            let Child::Atom(Atom::Text(after_text)) = children.remove(join_seam) else {
-                unreachable!("Already checked")
-            };
+        && matches!(prev, Child::Atom(Atom::Text(_)))
+        && matches!(after, Child::Atom(Atom::Text(_)))
+    {
+        let Child::Atom(Atom::Text(after_text)) = children.remove(join_seam) else {
+            unreachable!("Already checked")
+        };
 
-            let Some(Child::Atom(Atom::Text(prev_text))) = children.get_mut(join_seam - 1) else {
-                unreachable!("Already checked")
-            };
+        let Some(Child::Atom(Atom::Text(prev_text))) = children.get_mut(join_seam - 1) else {
+            unreachable!("Already checked")
+        };
 
-            let res = Some(prev_text.len());
+        let res = Some(prev_text.len());
 
-            prev_text.push_str(&after_text);
+        prev_text.push_str(&after_text);
 
-            return res;
-        }
+        return res;
+    }
 
     None
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Atom {
     Text(String),
@@ -36,7 +37,7 @@ pub enum Atom {
     Operator(OperatorKind),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OperatorKind {
     Mul,
@@ -99,7 +100,8 @@ pub enum ChildMut<'a> {
     Container(&'a mut Container),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OwnedChild {
     Atom(Atom),
 
@@ -168,7 +170,10 @@ mod tests {
                 .unwrap();
             root.add_atom(Atom::Operator(OperatorKind::Add));
             let ContainerKind::Fraction { numerator, .. } =
-                root.tree().get_container(id).unwrap().kind().clone();
+                root.tree().get_container(id).unwrap().kind().clone()
+            else {
+                panic!("Expected ContainerKind::Fraction")
+            };
             (id, numerator)
         };
         tree.get_mut_sequence(numerator)

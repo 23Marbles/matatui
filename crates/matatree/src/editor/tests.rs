@@ -13,6 +13,9 @@ fn tree_with_fraction() -> (Tree, ContainerId, SequenceId, SequenceId) {
             numerator,
             denominator,
         } => (*numerator, *denominator),
+        _ => {
+            panic!("Expected fraction")
+        }
     };
     tree.get_mut_sequence(numerator)
         .unwrap()
@@ -142,6 +145,9 @@ fn backspace_at_empty_fraction_start_removes_the_fraction() {
             numerator,
             denominator,
         } => (*numerator, *denominator),
+        _ => {
+            panic!("Expected fraction")
+        }
     };
     let mut editor = CursoredTree::from_tree(tree);
     editor.move_right();
@@ -153,4 +159,59 @@ fn backspace_at_empty_fraction_start_removes_the_fraction() {
     assert_eq!(editor.tree().root().child_count(), 0);
     assert_eq!(editor.cursor().sequence_id(), editor.tree().root_id());
     assert_eq!(editor.cursor().child_index(), None);
+}
+
+fn tree_with_script(
+    kind: impl FnOnce([SequenceId; 1]) -> ContainerKind,
+) -> (Tree, ContainerId, SequenceId) {
+    let mut tree = Tree::new();
+    let container_id = tree
+        .get_mut_sequence(tree.root_id())
+        .unwrap()
+        .add_container(kind)
+        .unwrap();
+    let sequence = match tree.get_container(container_id).unwrap().kind() {
+        ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => *sequence,
+        _ => panic!("Expected script"),
+    };
+    tree.get_mut_sequence(sequence)
+        .unwrap()
+        .add_atom(Atom::Text("2".into()));
+    (tree, container_id, sequence)
+}
+
+#[test]
+fn editor_navigation_enters_and_exits_subscript_sequences() {
+    let (tree, _, sequence) =
+        tree_with_script(|[sequence]| ContainerKind::sub_script([sequence]));
+    let mut editor = CursoredTree::from_tree(tree);
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), sequence);
+    assert_eq!(editor.cursor().child_index(), None);
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), sequence);
+    assert_eq!(editor.cursor().child_index(), Some((0, Some(0))));
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), editor.tree().root_id());
+}
+
+#[test]
+fn editor_navigation_enters_and_exits_superscript_sequences() {
+    let (tree, _, sequence) =
+        tree_with_script(|[sequence]| ContainerKind::super_script([sequence]));
+    let mut editor = CursoredTree::from_tree(tree);
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), sequence);
+    assert_eq!(editor.cursor().child_index(), None);
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), sequence);
+    assert_eq!(editor.cursor().child_index(), Some((0, Some(0))));
+
+    editor.move_right();
+    assert_eq!(editor.cursor().sequence_id(), editor.tree().root_id());
 }

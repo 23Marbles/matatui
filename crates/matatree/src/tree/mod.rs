@@ -110,7 +110,10 @@ mod tests {
                 .get_container(container_id)
                 .unwrap()
                 .kind()
-                .clone();
+                .clone()
+            else {
+                panic!("Expected fraction")
+            };
             (container_id, numerator, denominator)
         };
 

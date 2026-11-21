@@ -7,7 +7,7 @@ use crate::editor::{
 
 use super::*;
 
-mod insert_char;
+mod insert_item;
 
 impl SequenceMut<'_> {
     pub fn handle_event(&mut self, event: event::Event, cursor: &mut Cursor) {
@@ -38,6 +38,20 @@ impl SequenceMut<'_> {
                         Atom::Operator(_) => true,
                     },
                     ChildMut::Container(Container {
+                        kind:
+                            ContainerKind::SubScript { sequence }
+                            | ContainerKind::SuperScript { sequence },
+                        ..
+                    }) => {
+                        let id = *sequence;
+
+                        self.tree()
+                            .get_sequence(id)
+                            .expect("Sequence should exist")
+                            .child_count()
+                            == 0
+                    }
+                    ChildMut::Container(Container {
                         kind: ContainerKind::Fraction { .. },
                         ..
                     }) => false,
@@ -54,7 +68,7 @@ impl SequenceMut<'_> {
 
                 let _ = join_text_children(&mut self.children, child_idx);
             }
-            event::Event::InsertChar(ch) => insert_char::handle(self, ch, cursor),
+            event::Event::Insert(insert_item) => insert_item::handle(self, insert_item, cursor),
             event::Event::Delete => {
                 let Some(next_cursor) = self.as_ref().move_right(*cursor) else {
                     return;

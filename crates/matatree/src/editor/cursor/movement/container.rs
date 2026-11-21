@@ -22,6 +22,13 @@ impl CursorControl for ContainerRef<'_> {
                     None
                 }
             }
+            ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+                if sequence == &child_id {
+                    Some(get_left_of_container(self))
+                } else {
+                    None
+                }
+            }
         }
     }
 
@@ -38,24 +45,14 @@ impl CursorControl for ContainerRef<'_> {
 
                     Some(sequence.leftmost_cursor())
                 } else if denominator == &child_id {
-                    let parent = self.parent().unwrap();
-
-                    let (parent_index, _) = parent
-                        .children()
-                        .into_iter()
-                        .enumerate()
-                        .find(|(_, child)| {
-                            matches!(
-                                child,
-                                &ChildRef::Container(container_ref) if container_ref.id() == self.id()
-                            )
-                        })
-                        .expect("Parent should have this as a child");
-
-                    Some(Cursor {
-                        sequence_id: parent.id(),
-                        child_index: Some((parent_index, None)),
-                    })
+                    Some(get_right_of_container(self))
+                } else {
+                    None
+                }
+            }
+            ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+                if child_id == *sequence {
+                    Some(get_right_of_container(self))
                 } else {
                     None
                 }
@@ -64,37 +61,64 @@ impl CursorControl for ContainerRef<'_> {
     }
 
     fn leftmost_cursor(&self) -> Cursor {
-        match self.kind() {
-            ContainerKind::Fraction { numerator, .. } => {
-                let sequence = self.tree().get_sequence(*numerator).unwrap();
-
-                sequence.leftmost_cursor()
+        let sequence = match self.kind() {
+            ContainerKind::Fraction {
+                numerator: sequence,
+                ..
             }
-        }
+            | ContainerKind::SubScript { sequence }
+            | ContainerKind::SuperScript { sequence } => *sequence,
+        };
+
+        let sequence = self.tree().get_sequence(sequence).unwrap();
+        sequence.leftmost_cursor()
     }
 
     fn rightmost_cursor(&self) -> Cursor {
-        match self.kind() {
-            ContainerKind::Fraction { denominator, .. } => {
-                let sequence = self.tree().get_sequence(*denominator).unwrap();
-
-                sequence.rightmost_cursor()
+        let sequence = match self.kind() {
+            ContainerKind::Fraction {
+                denominator: sequence,
+                ..
             }
-        }
+            | ContainerKind::SubScript { sequence }
+            | ContainerKind::SuperScript { sequence } => *sequence,
+        };
+
+        let sequence = self.tree().get_sequence(sequence).unwrap();
+        sequence.rightmost_cursor()
+    }
+}
+
+fn get_right_of_container(container: &ContainerRef<'_>) -> Cursor {
+    let parent = container.parent().unwrap();
+
+    let parent_index = parent
+        .children()
+        .into_iter()
+        .position(|child| {
+            matches!(
+                child,
+                ChildRef::Container(container_ref) if container_ref.id() == container.id()
+            )
+        })
+        .expect("Parent should have this as a child");
+
+    Cursor {
+        sequence_id: parent.id(),
+        child_index: Some((parent_index, None)),
     }
 }
 
 fn get_left_of_container(container: &ContainerRef<'_>) -> Cursor {
     let parent = container.parent().unwrap();
 
-    let (parent_index, _) = parent
+    let parent_index = parent
         .children()
         .into_iter()
-        .enumerate()
-        .find(|(_, child)| {
+        .position(|child| {
             matches!(
                 child,
-                &ChildRef::Container(container_ref) if container_ref.id() == container.id()
+                ChildRef::Container(container_ref) if container_ref.id() == container.id()
             )
         })
         .expect("Parent should have this as a child");

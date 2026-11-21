@@ -14,12 +14,12 @@ pub(super) fn handle_delete(
     container: ContainerMut<'_>,
     cursor: &mut Cursor,
 ) -> Option<event::Event> {
-    match container.kind() {
+    let event = (!match container.kind() {
         ContainerKind::Fraction {
             numerator,
             denominator,
         } => {
-            if *cursor
+            *cursor
                 == container
                     .tree()
                     .get_sequence(*numerator)
@@ -31,35 +31,46 @@ pub(super) fn handle_delete(
                         .get_sequence(*denominator)
                         .unwrap()
                         .rightmost_cursor()
-            {
-                flatten::flatten_sequences(container, cursor);
-
-                None
-            } else {
-                Some(event::Event::Delete)
-            }
         }
-    }
+        ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+            *cursor
+                == container
+                    .tree
+                    .get_sequence(*sequence)
+                    .unwrap()
+                    .rightmost_cursor()
+        }
+    })
+    .then_some(event::Event::Delete);
+
+    if event.is_none() {
+        flatten::flatten_sequences(container, cursor);
+    };
+
+    event
 }
 
 pub(super) fn handle_backspace(
     container: ContainerMut<'_>,
     cursor: &mut Cursor,
 ) -> Option<event::Event> {
-    match container.kind() {
+    let event = (!match container.kind() {
         ContainerKind::Fraction {
             numerator,
             denominator,
         } => {
-            if cursor.sequence_id() == *numerator && cursor.child_index().is_none()
+            cursor.sequence_id() == *numerator && cursor.child_index().is_none()
                 || cursor.sequence_id() == *denominator && cursor.child_index().is_none()
-            {
-                flatten::flatten_sequences(container, cursor);
-
-                None
-            } else {
-                Some(event::Event::Backspace)
-            }
         }
-    }
+        ContainerKind::SubScript { sequence } | ContainerKind::SuperScript { sequence } => {
+            cursor.sequence_id() == *sequence && cursor.child_index().is_none()
+        }
+    })
+    .then_some(event::Event::Backspace);
+
+    if event.is_none() {
+        flatten::flatten_sequences(container, cursor);
+    };
+
+    event
 }

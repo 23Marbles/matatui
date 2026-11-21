@@ -23,8 +23,6 @@ fn main() -> Result<(), eframe::Error> {
 
     let args = Args::parse();
 
-    
-
     eframe::run_native(
         "Matatree debugger",
         NativeOptions::default(),

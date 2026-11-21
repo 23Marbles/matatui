@@ -76,6 +76,9 @@ fn make_fraction(
             numerator,
             denominator,
         } => (*numerator, *denominator),
+        _ => {
+            panic!("Expected fraction")
+        }
     };
     if numerator_text {
         tree.get_mut_sequence(numerator)
@@ -649,6 +652,9 @@ fn assert_backspace_flattens_fraction_inside_parent(parent_in_denominator: bool)
             numerator,
             denominator,
         } => (*numerator, *denominator),
+        _ => {
+            panic!("Expected fraction")
+        }
     };
     let parent_sequence_id = if parent_in_denominator {
         outer_denominator
@@ -665,6 +671,9 @@ fn assert_backspace_flattens_fraction_inside_parent(parent_in_denominator: bool)
                 numerator,
                 denominator,
             } => (*numerator, *denominator),
+            _ => {
+                panic!("Expected fraction")
+            }
         };
         (inner_id, numerator, denominator)
     };
@@ -720,6 +729,9 @@ fn flattening_fraction_preserves_neighboring_fraction_containers() {
                 numerator,
                 denominator,
             } => (*numerator, *denominator),
+            _ => {
+                panic!("Expected fraction")
+            }
         };
         (before_id, target_id, after_id, numerator, denominator)
     };
