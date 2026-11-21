@@ -6,6 +6,7 @@ use matatree::{
         CursoredTree, Editor,
         event::{CursorDirection, Event as MatatreeEvent},
     },
+    layout::LayoutEngine,
     tree::Tree,
 };
 use ratatui::{
@@ -19,6 +20,25 @@ pub struct RatatuiEditor {
     tree: matatree::editor::CursoredTree,
 
     pub x_offset: i16,
+}
+
+impl RatatuiEditor {
+    pub fn move_left(&mut self) {
+        let width =
+            RatatuiLayout::layout_sequence(self.tree.tree().root(), Some(&self.tree.cursor()))
+                .measurement
+                .width;
+
+        let new_x_offset = self.x_offset.saturating_sub(1);
+
+        if -new_x_offset <= width {
+            self.x_offset = new_x_offset
+        }
+    }
+
+    pub fn move_right(&mut self) {
+        self.x_offset = self.x_offset.saturating_add(1)
+    }
 }
 
 impl RatatuiEditor {
@@ -42,21 +62,18 @@ impl Editor for RatatuiEditor {
 
     fn handle_event(&mut self, event: Self::Event) {
         let event = match event {
-            Event::Key(key_event)
-                if !key_event.is_release() => {
-                    match key_event.code {
-                        KeyCode::Left => MatatreeEvent::MoveCursorLogical {
-                            direction: CursorDirection::Left,
-                        },
-                        KeyCode::Right => MatatreeEvent::MoveCursorLogical {
-                            direction: CursorDirection::Right,
-                        },
-                        KeyCode::Backspace => MatatreeEvent::Backspace,
-                        KeyCode::Char(ch) => MatatreeEvent::InsertChar(ch),
-                        KeyCode::Delete => MatatreeEvent::Delete,
-                        _ => return,
-                    }
-                }
+            Event::Key(key_event) if !key_event.is_release() => match key_event.code {
+                KeyCode::Left => MatatreeEvent::MoveCursorLogical {
+                    direction: CursorDirection::Left,
+                },
+                KeyCode::Right => MatatreeEvent::MoveCursorLogical {
+                    direction: CursorDirection::Right,
+                },
+                KeyCode::Backspace => MatatreeEvent::Backspace,
+                KeyCode::Char(ch) => MatatreeEvent::InsertChar(ch),
+                KeyCode::Delete => MatatreeEvent::Delete,
+                _ => return,
+            },
             _ => return,
         };
 
