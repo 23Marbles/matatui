@@ -2,7 +2,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::editor::{
     cursor::{Cursor, CursorControl},
-    event,
+    event::{self, CharInsertOptions},
 };
 
 use super::*;
@@ -10,7 +10,12 @@ use super::*;
 mod insert_item;
 
 impl SequenceMut<'_> {
-    pub fn handle_event(&mut self, event: event::Event, cursor: &mut Cursor) {
+    pub fn handle_event(
+        &mut self,
+        event: event::Event,
+        char_insertion_options: CharInsertOptions,
+        cursor: &mut Cursor,
+    ) {
         match event {
             event::Event::MoveCursorLogical { .. } => {
                 unimplemented!("Should be handled by the editor")
@@ -68,7 +73,9 @@ impl SequenceMut<'_> {
 
                 let _ = join_text_children(&mut self.children, child_idx);
             }
-            event::Event::Insert(insert_item) => insert_item::handle(self, insert_item, cursor),
+            event::Event::Insert(insert_item) => {
+                insert_item::handle(self, insert_item, char_insertion_options, cursor)
+            }
             event::Event::Delete => {
                 let Some(next_cursor) = self.as_ref().move_right(*cursor) else {
                     return;

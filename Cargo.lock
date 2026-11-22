@@ -2395,6 +2395,7 @@ name = "matatree"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bitflags 2.13.2",
  "log",
  "num-traits",
  "serde",

@@ -4,7 +4,7 @@ pub(crate) mod render;
 use matatree::{
     editor::{
         CursoredTree, Editor,
-        event::{CursorDirection, Event as MatatreeEvent, InsertItem},
+        event::{CharInsertOptions, CursorDirection, Event as MatatreeEvent, InsertItem},
     },
     layout::LayoutEngine,
     tree::Tree,
@@ -80,7 +80,8 @@ impl Editor for RatatuiEditor {
             _ => return,
         };
 
-        self.tree.handle_event(event);
+        self.tree
+            .handle_event_with_char_opt(event, CharInsertOptions::IMPLICIT_OPERATORS);
     }
 }
 

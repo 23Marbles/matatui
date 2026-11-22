@@ -5,7 +5,7 @@ pub mod event;
 mod tests;
 
 use crate::{
-    editor::cursor::Cursor,
+    editor::{cursor::Cursor, event::CharInsertOptions},
     layout::{LayoutEngine, MeasurementResult},
     render::{RenderContext, Renderer},
     tree::{SequenceMut, SequenceRef, Tree},
@@ -66,6 +66,35 @@ impl CursoredTree {
             tree,
         }
     }
+
+    pub fn handle_event_with_char_opt(
+        &mut self,
+        event: event::Event,
+        char_insertion_options: CharInsertOptions,
+    ) {
+        match event {
+            event::Event::MoveCursorLogical { direction } => match direction {
+                event::CursorDirection::Left => self.move_left(),
+                event::CursorDirection::Right => self.move_right(),
+            },
+            event => {
+                let (tree, cursor) = (&mut self.tree, &mut self.cursor);
+                let sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
+
+                let event = if let Some(container) = sequence.into_parent_mut() {
+                    container.handle_event(event, cursor)
+                } else {
+                    Some(event)
+                };
+
+                if let Some(event) = event {
+                    let mut sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
+
+                    sequence.handle_event(event, char_insertion_options, cursor);
+                }
+            }
+        }
+    }
 }
 
 impl Default for CursoredTree {
@@ -91,27 +120,6 @@ impl Editor for CursoredTree {
     }
 
     fn handle_event(&mut self, event: Self::Event) {
-        match event {
-            event::Event::MoveCursorLogical { direction } => match direction {
-                event::CursorDirection::Left => self.move_left(),
-                event::CursorDirection::Right => self.move_right(),
-            },
-            event => {
-                let (tree, cursor) = (&mut self.tree, &mut self.cursor);
-                let sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
-
-                let event = if let Some(container) = sequence.into_parent_mut() {
-                    container.handle_event(event, cursor)
-                } else {
-                    Some(event)
-                };
-
-                if let Some(event) = event {
-                    let mut sequence = tree.get_mut_sequence(cursor.sequence_id()).unwrap();
-
-                    sequence.handle_event(event, cursor);
-                }
-            }
-        }
+        self.handle_event_with_char_opt(event, CharInsertOptions::empty());
     }
 }

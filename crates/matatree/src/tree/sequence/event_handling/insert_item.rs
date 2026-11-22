@@ -5,7 +5,7 @@ use slotmap::SlotMap;
 use crate::{
     editor::{
         cursor::{Cursor, CursorControl},
-        event::InsertItem,
+        event::{CharInsertOptions, InsertItem},
     },
     tree::{
         Atom, Child, Container, ContainerKind, OperatorKind, Sequence, SequenceId, SequenceMut,
@@ -183,7 +183,12 @@ impl ContainerCreator {
     }
 }
 
-pub(super) fn handle(sequence: &mut SequenceMut<'_>, item: InsertItem, cursor: &mut Cursor) {
+pub(super) fn handle(
+    sequence: &mut SequenceMut<'_>,
+    item: InsertItem,
+    char_insertion_options: CharInsertOptions,
+    cursor: &mut Cursor,
+) {
     enum ChildCreator {
         Operator(OperatorKind),
         Container(ContainerCreator),
@@ -195,7 +200,22 @@ pub(super) fn handle(sequence: &mut SequenceMut<'_>, item: InsertItem, cursor: &
         InsertItem::SuperScript => ChildCreator::Container(ContainerCreator::super_script()),
         InsertItem::SubScript => ChildCreator::Container(ContainerCreator::sub_script()),
         InsertItem::Operator(operator_kind) => ChildCreator::Operator(operator_kind),
-        InsertItem::Char(ch) => ChildCreator::Char(ch),
+        InsertItem::Char(ch) => {
+            if char_insertion_options.contains(CharInsertOptions::IMPLICIT_OPERATORS)
+                && let Some(kind) = OperatorKind::from_char(ch)
+            {
+                ChildCreator::Operator(kind)
+            } else if char_insertion_options.contains(CharInsertOptions::IMPLICIT_CONTAINERS) {
+                match ch {
+                    '/' => ChildCreator::Container(ContainerCreator::fraction()),
+                    '^' => ChildCreator::Container(ContainerCreator::super_script()),
+                    '_' => ChildCreator::Container(ContainerCreator::sub_script()),
+                    ch => ChildCreator::Char(ch),
+                }
+            } else {
+                ChildCreator::Char(ch)
+            }
+        }
     };
 
     match sequence.text_around_cursor(cursor.child_index()) {

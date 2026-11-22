@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+bitflags = "2.13.2"
 log = "0.4.35"
 num-traits = "0.2.19"
 serde = { version = "1.0.229", optional = true }
