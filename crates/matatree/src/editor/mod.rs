@@ -33,7 +33,7 @@ pub trait Editor {
     fn handle_event(&mut self, event: Self::Event);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CursoredTree {
     tree: Tree,

@@ -16,6 +16,7 @@ use ratatui::{
 
 use crate::{layout::RatatuiLayout, render::RatatuiRender};
 
+#[derive(Debug, Clone)]
 pub struct RatatuiEditor {
     tree: matatree::editor::CursoredTree,
 
@@ -23,6 +24,10 @@ pub struct RatatuiEditor {
 }
 
 impl RatatuiEditor {
+    pub fn cursored_tree(&self) -> &matatree::editor::CursoredTree {
+        &self.tree
+    }
+
     pub fn move_left(&mut self) {
         let width =
             RatatuiLayout::layout_sequence(self.tree.tree().root(), Some(&self.tree.cursor()))

@@ -1,5 +1,6 @@
 mod atom;
 mod fraction;
+mod scripts;
 
 #[cfg(test)]
 mod tests;
@@ -8,9 +9,14 @@ use std::cmp::max;
 
 use matatree::{editor::cursor::Cursor, layout::*, tree::*};
 
-use crate::layout::atom::layout_atom;
+use crate::layout::{
+    atom::layout_atom,
+    scripts::{sub_script, super_script},
+};
 
 pub struct RatatuiLayout;
+
+type RatatuiMeasurementResult<'a> = matatree::layout::MeasurementResult<'a, RatatuiLayout>;
 
 impl FontLayout<i16> for RatatuiLayout {
     fn measure_str(&self, s: &str) -> Measurement<i16> {
@@ -31,7 +37,7 @@ impl LayoutEngine for RatatuiLayout {
     fn layout_sequence<'a>(
         sequence: SequenceRef<'a>,
         cursor: Option<&Cursor>,
-    ) -> matatree::layout::MeasurementResult<'a, Self> {
+    ) -> RatatuiMeasurementResult<'a> {
         let this_sequence_highlighted = cursor.is_some_and(|c| c.sequence_id() == sequence.id());
 
         let mut check_cursor = !this_sequence_highlighted;
@@ -101,7 +107,7 @@ impl LayoutEngine for RatatuiLayout {
                     let (x_text_offset, y_text_offset, height) = match (&res.kind, text_idx) {
                         (NodeKindRef::Text(_), Some(text_idx)) => (text_idx as i16, None, 1),
                         (NodeKindRef::Text(_), None) => (0, None, 1),
-                        (NodeKindRef::Operator(_), _) => (
+                        (NodeKindRef::Operator(_) | NodeKindRef::SingleSequence(_), _) => (
                             if let Some(
                                 ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
                             ) = cursor_idx
@@ -167,32 +173,21 @@ impl LayoutEngine for RatatuiLayout {
             cursor_pos,
         }
     }
+
     fn layout_container<'a>(
         container: ContainerRef<'a>,
         cursor: Option<&Cursor>,
-    ) -> matatree::layout::MeasurementResult<'a, Self> {
+    ) -> RatatuiMeasurementResult<'a> {
         match *container.kind() {
             ContainerKind::Fraction {
                 numerator,
                 denominator,
             } => fraction::layout_fraction(container, cursor, numerator, denominator),
             ContainerKind::SubScript { sequence } => {
-                let mut result =
-                    Self::layout_sequence(container.tree().get_sequence(sequence).unwrap(), cursor);
-
-                result.measurement.ascent = result.measurement.height();
-                result.measurement.descent = 0;
-
-                result
+                super_script(container.tree().get_sequence(sequence).unwrap(), cursor, 1)
             }
             ContainerKind::SuperScript { sequence } => {
-                let mut result =
-                    Self::layout_sequence(container.tree().get_sequence(sequence).unwrap(), cursor);
-
-                result.measurement.descent += result.measurement.height();
-                result.measurement.ascent = 0;
-
-                result
+                sub_script(container.tree().get_sequence(sequence).unwrap(), cursor, 0)
             }
         }
     }

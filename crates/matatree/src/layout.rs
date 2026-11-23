@@ -40,6 +40,8 @@ pub enum NodeKindRef<'a, L: LayoutEngine> {
 
     Operator(char),
 
+    SingleSequence(Box<PositionedNodeRef<'a, L>>),
+
     Fraction {
         numerator: Box<PositionedNodeRef<'a, L>>,
 
@@ -79,10 +81,10 @@ pub struct MeasurementResult<'a, L: LayoutEngine> {
 }
 
 pub struct PositionedNodeRef<'a, L: LayoutEngine> {
-    /// X difference from the parent's X, not global
+    /// x difference from the parent's x, not global
     pub x: L::Unit,
 
-    /// Y difference from the parent's Y, not global
+    /// y difference from the parent's y, not global
     pub y: L::Unit,
 
     pub kind: NodeKindRef<'a, L>,
