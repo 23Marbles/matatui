@@ -1,32 +1,26 @@
-use std::collections::HashMap;
-
 use egui::{CollapsingHeader, WidgetText};
 use matatree::{
     editor::Editor,
-    tree::{Atom, ChildRef, OperatorKind, SequenceId, SequenceRef},
+    tree::{Atom, ChildRef, OperatorKind, SequenceRef},
 };
 
-use crate::{app, command::TreeEdit};
+use crate::{
+    app::{self, ContextEdit},
+    command::TreeEdit,
+};
 
 mod container;
 pub use container::debug_container;
 
 pub fn draw_tree(context: &mut app::Context<'_>) {
     let app::Context {
-        app,
         ui,
         frame,
-        edit_list,
+        tree,
+        edit,
     } = context;
 
-    debug_sequence(
-        app.editor.tree().root(),
-        "Root",
-        ui,
-        frame,
-        edit_list,
-        &mut app.atom_buffers,
-    );
+    debug_sequence(tree.tree().root(), "Root", ui, frame, edit);
 }
 
 pub fn debug_sequence(
@@ -34,34 +28,37 @@ pub fn debug_sequence(
     label: impl Into<WidgetText>,
     ui: &mut egui::Ui,
     frame: &mut eframe::Frame,
-    edits: &mut Vec<TreeEdit>,
-    atom_buffers: &mut HashMap<(SequenceId, usize), String>,
+    edit: &mut ContextEdit<'_>,
 ) {
     let mut header_edits = Vec::new();
+
+    let edit_is_mut = edit.is_mut();
 
     CollapsingHeader::custom(
         ui,
         sequence.id(),
         |ui| {
             ui.label(label);
-            if ui.small_button("+").clicked() {
-                header_edits.push(TreeEdit::AddAtom {
-                    atom: Atom::Operator(OperatorKind::Add),
-                    parent: sequence.id(),
-                });
-            }
+            if edit_is_mut {
+                if ui.small_button("+").clicked() {
+                    header_edits.push(TreeEdit::AddAtom {
+                        atom: Atom::Operator(OperatorKind::Add),
+                        parent: sequence.id(),
+                    });
+                }
 
-            if ui.small_button("𝑥").clicked() {
-                header_edits.push(TreeEdit::AddAtom {
-                    atom: Atom::Text("x".to_string()),
-                    parent: sequence.id(),
-                });
-            }
+                if ui.small_button("𝑥").clicked() {
+                    header_edits.push(TreeEdit::AddAtom {
+                        atom: Atom::Text("x".to_string()),
+                        parent: sequence.id(),
+                    });
+                }
 
-            if ui.small_button("/").clicked() {
-                header_edits.push(TreeEdit::AddFraction {
-                    parent: sequence.id(),
-                });
+                if ui.small_button("/").clicked() {
+                    header_edits.push(TreeEdit::AddFraction {
+                        parent: sequence.id(),
+                    });
+                }
             }
         },
         |ui| {
@@ -75,78 +72,95 @@ pub fn debug_sequence(
                                     - ui.spacing().item_spacing.x;
 
                                 ui.push_id(index, |ui| match atom {
-                                    Atom::Text(text) => {
-                                        let key = (sequence.id(), index);
+                                    Atom::Text(text) => match edit {
+                                        ContextEdit::Editable {
+                                            edit_list,
+                                            atom_buffers,
+                                        } => {
+                                            let key = (sequence.id(), index);
 
-                                        let value =
-                                            atom_buffers.entry(key).or_insert_with(|| text.clone());
+                                            let value = atom_buffers
+                                                .entry(key)
+                                                .or_insert_with(|| text.clone());
 
-                                        if ui
-                                            .add(
-                                                egui::TextEdit::singleline(value)
-                                                    .desired_width(edit_width),
-                                            )
-                                            .changed()
-                                        {
-                                            edits.push(TreeEdit::ReplaceAtom {
-                                                parent: sequence.id(),
-                                                index,
-                                                atom: Atom::Text(value.clone()),
-                                            });
+                                            if ui
+                                                .add(
+                                                    egui::TextEdit::singleline(value)
+                                                        .desired_width(edit_width),
+                                                )
+                                                .changed()
+                                            {
+                                                edit_list.push(TreeEdit::ReplaceAtom {
+                                                    parent: sequence.id(),
+                                                    index,
+                                                    atom: Atom::Text(value.clone()),
+                                                });
+                                            }
+
+                                            if ui.small_button("×").clicked() {
+                                                atom_buffers.remove(&key);
+
+                                                edit_list.push(TreeEdit::DeleteChild {
+                                                    index,
+                                                    parent: sequence.id(),
+                                                });
+                                            }
                                         }
-
-                                        if ui.small_button("×").clicked() {
-                                            atom_buffers.remove(&key);
-
-                                            edits.push(TreeEdit::DeleteChild {
-                                                index,
-                                                parent: sequence.id(),
-                                            });
+                                        ContextEdit::Immutable => {
+                                            ui.label(text);
                                         }
-                                    }
+                                    },
+                                    Atom::Operator(kind) => match edit {
+                                        ContextEdit::Editable {
+                                            edit_list,
+                                            atom_buffers,
+                                        } => {
+                                            let key = (sequence.id(), index);
 
-                                    Atom::Operator(ch) => {
-                                        let key = (sequence.id(), index);
+                                            let value = atom_buffers
+                                                .entry(key)
+                                                .or_insert_with(|| kind.to_string());
 
-                                        let value = atom_buffers
-                                            .entry(key)
-                                            .or_insert_with(|| ch.to_string());
+                                            let first_char_len = value.ceil_char_boundary(1);
 
-                                        let first_char_len = value.ceil_char_boundary(1);
+                                            value.truncate(first_char_len);
 
-                                        value.truncate(first_char_len);
+                                            if ui
+                                                .add(
+                                                    egui::TextEdit::singleline(value)
+                                                        .char_limit(1)
+                                                        .desired_width(edit_width),
+                                                )
+                                                .changed()
+                                                && let Some(ch) = value.chars().next()
+                                                && let Some(kind) = OperatorKind::from_char(ch)
+                                            {
+                                                edit_list.push(TreeEdit::ReplaceAtom {
+                                                    parent: sequence.id(),
+                                                    index,
+                                                    atom: Atom::Operator(kind),
+                                                });
+                                            }
 
-                                        if ui
-                                            .add(
-                                                egui::TextEdit::singleline(value)
-                                                    .desired_width(edit_width),
-                                            )
-                                            .changed()
-                                            && let Some(ch) = value.chars().next()
-                                            && let Some(kind) = OperatorKind::from_char(ch)
-                                        {
-                                            edits.push(TreeEdit::ReplaceAtom {
-                                                parent: sequence.id(),
-                                                index,
-                                                atom: Atom::Operator(kind),
-                                            });
+                                            if ui.small_button("×").clicked() {
+                                                atom_buffers.remove(&key);
+
+                                                edit_list.push(TreeEdit::DeleteChild {
+                                                    index,
+                                                    parent: sequence.id(),
+                                                });
+                                            }
                                         }
-
-                                        if ui.small_button("×").clicked() {
-                                            atom_buffers.remove(&key);
-
-                                            edits.push(TreeEdit::DeleteChild {
-                                                index,
-                                                parent: sequence.id(),
-                                            });
+                                        ContextEdit::Immutable => {
+                                            ui.label(kind.to_char().to_string());
                                         }
-                                    }
+                                    },
                                 });
                             });
                         }
 
                         ChildRef::Container(container) => {
-                            debug_container(container, ui, frame, edits, atom_buffers);
+                            debug_container(container, ui, frame, edit);
                         }
                     }
                 }
@@ -154,5 +168,13 @@ pub fn debug_sequence(
         },
     );
 
-    edits.extend(header_edits);
+    if header_edits.is_empty() {
+        return;
+    }
+
+    let ContextEdit::Editable { edit_list, .. } = edit else {
+        unreachable!("Context edit should not allow edits to be input")
+    };
+
+    edit_list.extend(header_edits);
 }

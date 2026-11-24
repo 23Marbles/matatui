@@ -13,7 +13,7 @@
                 value: Some((
                     parent: None,
                     children: [
-                        Atom(Text("x")),
+                        Atom(Text("xeee")),
                         Atom(Operator(Mul)),
                         Atom(Text("x")),
                         Container((
@@ -230,6 +230,6 @@
             idx: 1,
             version: 1,
         ),
-        child_index: None,
+        child_index: Some((0, Some(2))),
     ),
 )

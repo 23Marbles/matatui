@@ -1,41 +1,36 @@
-use matatree::tree::{Atom, ContainerId, ContainerKind, SequenceId};
+use std::ops::DerefMut;
+
+use matatree::{
+    editor::CursoredTree,
+    tree::{Atom, ContainerId, ContainerKind, SequenceId},
+};
 
 use crate::app::DebugApp;
 
 pub enum TreeEdit {
     AddAtom {
         atom: Atom,
-
         parent: SequenceId,
     },
     AddFraction {
         parent: SequenceId,
     },
-
     ReplaceAtom {
         atom: Atom,
-
         index: usize,
-
         parent: SequenceId,
     },
-
     InsertAtom {
         atom: Atom,
-
         index: usize,
-
         parent: SequenceId,
     },
     InsertFraction {
         index: usize,
-
         parent: SequenceId,
     },
-
     DeleteChild {
         index: usize,
-
         parent: SequenceId,
     },
     DeleteContainer {
@@ -47,32 +42,25 @@ pub enum TreeEdit {
 
 impl DebugApp {
     pub fn apply_edit(&mut self, edit: TreeEdit) {
-        match edit {
+        let apply_edit = |tree: &mut CursoredTree| match edit {
             TreeEdit::InsertFraction { parent, index } => {
-                self.editor
-                    .tree_mut()
+                tree.tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .insert_container(index, ContainerKind::fraction)
                     .expect("Failed to create child");
             }
             TreeEdit::AddFraction { parent } => {
-                self.editor
-                    .tree_mut()
+                tree.tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .add_container(ContainerKind::fraction)
                     .expect("Failed to create child");
             }
             TreeEdit::DeleteContainer { id } => {
-                self.editor
-                    .tree_mut()
-                    .get_mut_container(id)
-                    .unwrap()
-                    .delete();
+                tree.tree_mut().get_mut_container(id).unwrap().delete();
             }
-            TreeEdit::AddAtom { atom, parent } => self
-                .editor
+            TreeEdit::AddAtom { atom, parent } => tree
                 .tree_mut()
                 .get_mut_sequence(parent)
                 .unwrap()
@@ -81,8 +69,7 @@ impl DebugApp {
                 parent,
                 index,
                 atom,
-            } => self
-                .editor
+            } => tree
                 .tree_mut()
                 .get_mut_sequence(parent)
                 .unwrap()
@@ -92,8 +79,7 @@ impl DebugApp {
                 index,
                 atom,
             } => {
-                match self
-                    .editor
+                match tree
                     .tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
@@ -107,15 +93,26 @@ impl DebugApp {
                 };
             }
             TreeEdit::DeleteChild { parent, index } => assert!(
-                self.editor
-                    .tree_mut()
+                tree.tree_mut()
                     .get_mut_sequence(parent)
                     .unwrap()
                     .delete_child(index)
                     .is_some()
             ),
-            TreeEdit::Left => self.editor.move_left(),
-            TreeEdit::Right => self.editor.move_right(),
+            TreeEdit::Left => tree.move_left(),
+            TreeEdit::Right => tree.move_right(),
+        };
+
+        match &mut self.kind {
+            crate::app::AppKind::ImmutableMirror { .. }
+            | crate::app::AppKind::ImmutableOwned { .. } => {
+                log::warn!("Tried to apply edit to an immutable `DebugApp`")
+            }
+            crate::app::AppKind::MutableMirror { tree, .. } => {
+                let mut tree = tree.write();
+                apply_edit(tree.deref_mut());
+            }
+            crate::app::AppKind::Owned { editor, .. } => apply_edit(editor),
         }
     }
 }

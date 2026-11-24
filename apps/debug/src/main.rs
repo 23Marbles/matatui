@@ -1,13 +1,8 @@
-pub mod app;
-pub mod command;
-pub mod tree;
-
 use std::path::PathBuf;
 
 use clap::Parser;
+use debug::app::DebugApp;
 use eframe::NativeOptions;
-
-use crate::app::DebugApp;
 
 #[derive(Debug, clap::Parser)]
 struct Args {

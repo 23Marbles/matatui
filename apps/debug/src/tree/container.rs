@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use egui::CollapsingHeader;
 use matatree::tree::{ChildRef, ContainerRef, SequenceId, SequenceRef};
 
-use crate::command::TreeEdit;
+use crate::{app::ContextEdit, command::TreeEdit};
 
 use super::debug_sequence;
 
@@ -11,8 +11,7 @@ pub fn debug_container(
     container: ContainerRef,
     ui: &mut egui::Ui,
     frame: &mut eframe::Frame,
-    edits: &mut Vec<TreeEdit>,
-    atom_buffers: &mut HashMap<(SequenceId, usize), String>,
+    edit: &mut ContextEdit,
 ) {
     let (name, children): (&'static str, Vec<(String, SequenceRef)>) = match container.kind() {
         matatree::tree::ContainerKind::Fraction {
@@ -50,28 +49,40 @@ pub fn debug_container(
     let mut header_edits = Vec::new();
     let mut remove_container = false;
 
+    let edit_is_mut = edit.is_mut();
+
     CollapsingHeader::custom(
         ui,
         container.id(),
         |ui| {
             ui.label(name);
-            if ui.small_button("×").clicked() {
-                remove_container = true;
-                header_edits.push(TreeEdit::DeleteContainer { id: container.id() });
+            if edit_is_mut {
+                if ui.small_button("×").clicked() {
+                    remove_container = true;
+                    header_edits.push(TreeEdit::DeleteContainer { id: container.id() });
+                }
             }
         },
         |ui| {
             for (label, sequence) in children {
-                debug_sequence(sequence, label, ui, frame, edits, atom_buffers);
+                debug_sequence(sequence, label, ui, frame, edit);
             }
         },
     );
 
-    if remove_container {
+    if remove_container && let ContextEdit::Editable { atom_buffers, .. } = edit {
         remove_container_atom_buffers(container, atom_buffers);
     }
 
-    edits.extend(header_edits);
+    if header_edits.is_empty() {
+        return;
+    }
+
+    let ContextEdit::Editable { edit_list, .. } = edit else {
+        unreachable!("Context edit should not allow edits to be input")
+    };
+
+    edit_list.extend(header_edits);
 }
 
 fn remove_container_atom_buffers(
