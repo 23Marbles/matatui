@@ -7,6 +7,7 @@ use matatree::{
         event::{CharInsertOptions, CursorDirection, Event as MatatreeEvent, InsertItem},
     },
     layout::LayoutEngine,
+    render::Renderer,
     tree::Tree,
 };
 use ratatui::{
@@ -17,10 +18,25 @@ use ratatui::{
 use crate::{layout::RatatuiLayout, render::RatatuiRender};
 
 #[derive(Debug, Clone)]
+pub struct EditorWidget<'a> {
+    tree: &'a matatree::editor::CursoredTree,
+    x_offset: u16,
+}
+
+impl<'a> From<&'a RatatuiEditor> for EditorWidget<'a> {
+    fn from(value: &'a RatatuiEditor) -> Self {
+        Self {
+            tree: &value.tree,
+            x_offset: value.x_offset,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct RatatuiEditor {
     tree: matatree::editor::CursoredTree,
 
-    pub x_offset: i16,
+    pub x_offset: u16,
 }
 
 impl RatatuiEditor {
@@ -28,27 +44,30 @@ impl RatatuiEditor {
         &self.tree
     }
 
+    pub fn cursored_tree_mut(&mut self) -> &mut matatree::editor::CursoredTree {
+        &mut self.tree
+    }
+
+    pub fn from_tree(tree: CursoredTree) -> Self {
+        Self { tree, x_offset: 0 }
+    }
+
     pub fn move_left(&mut self) {
         let width =
             RatatuiLayout::layout_sequence(self.tree.tree().root(), Some(&self.tree.cursor()))
                 .measurement
-                .width;
+                .width
+                .abs() as u16;
 
-        let new_x_offset = self.x_offset.saturating_sub(1);
+        let new_x_offset = self.x_offset.saturating_add(1);
 
-        if -new_x_offset <= width {
+        if new_x_offset <= width {
             self.x_offset = new_x_offset
         }
     }
 
     pub fn move_right(&mut self) {
-        self.x_offset = self.x_offset.saturating_add(1)
-    }
-}
-
-impl RatatuiEditor {
-    pub fn from_tree(tree: CursoredTree) -> Self {
-        Self { tree, x_offset: 0 }
+        self.x_offset = self.x_offset.saturating_sub(1);
     }
 }
 
@@ -91,12 +110,18 @@ impl Editor for RatatuiEditor {
 }
 
 impl ratatui::widgets::Widget for &'_ RatatuiEditor {
+    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer) {
+        EditorWidget::from(self).render(area, buf);
+    }
+}
+
+impl ratatui::widgets::Widget for EditorWidget<'_> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
         let new_area = Rect {
-            x: area.x.saturating_add_signed(self.x_offset),
+            x: area.x.saturating_sub(self.x_offset),
             ..area
         };
 
@@ -112,10 +137,11 @@ impl ratatui::widgets::Widget for &'_ RatatuiEditor {
             }
         }
 
-        <RatatuiEditor as Editor>::render::<RatatuiRender, RatatuiLayout>(
-            self,
+        RatatuiRender::render_layout(
+            self.tree.layout(),
             new_area,
             &mut clipped_buf,
+            &matatree::render::RenderContext::none(),
         );
 
         for y in clip_area.y..clip_area.bottom() {

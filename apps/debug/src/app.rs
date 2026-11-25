@@ -59,11 +59,11 @@ impl ContextEdit<'_> {
 pub enum AppKind {
     ImmutableMirror {
         cache: CursoredTree,
-        tree: Arc<parking_lot::RwLock<CursoredTree>>,
+        shared_tree: Arc<parking_lot::RwLock<CursoredTree>>,
     },
     MutableMirror {
         cache: CursoredTree,
-        tree: Arc<parking_lot::RwLock<CursoredTree>>,
+        shared_tree: Arc<parking_lot::RwLock<CursoredTree>>,
         atom_buffers: HashMap<(SequenceId, usize), String>,
     },
     ImmutableOwned {
@@ -100,15 +100,37 @@ impl DebugApp {
         }
     }
 
+    pub fn from_mirror(
+        tree: CursoredTree,
+        shared_tree: Arc<parking_lot::RwLock<CursoredTree>>,
+        mutable: bool,
+    ) -> Self {
+        Self {
+            kind: if mutable {
+                AppKind::MutableMirror {
+                    cache: tree,
+                    shared_tree,
+                    atom_buffers: HashMap::new(),
+                }
+            } else {
+                AppKind::ImmutableMirror {
+                    cache: tree,
+                    shared_tree,
+                }
+            },
+            ..Self::new()
+        }
+    }
+
     pub fn try_update_cache(&mut self) {
         match self.kind {
             AppKind::ImmutableMirror {
                 ref mut cache,
-                ref tree,
+                shared_tree: ref tree,
             }
             | AppKind::MutableMirror {
                 ref mut cache,
-                ref tree,
+                shared_tree: ref tree,
                 ..
             } => {
                 log::debug!("Trying to update cache");
@@ -129,11 +151,11 @@ impl DebugApp {
         match self.kind {
             AppKind::ImmutableMirror {
                 ref mut cache,
-                ref tree,
+                shared_tree: ref tree,
             }
             | AppKind::MutableMirror {
                 ref mut cache,
-                ref tree,
+                shared_tree: ref tree,
                 ..
             } => {
                 log::debug!("Updating cache");
@@ -178,6 +200,10 @@ impl DebugApp {
 }
 
 impl eframe::App for DebugApp {
+    fn logic(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.update_cache();
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let visible_sections = self.visible_sections;
 
@@ -226,12 +252,14 @@ impl eframe::App for DebugApp {
 
             if visible_sections.contains(VisibleSections::CURSOR) {
                 context.ui.horizontal(|ui| {
-                    if ui.small_button("<").clicked() {
-                        context.edit.push_edit(TreeEdit::Left);
-                    }
+                    if context.edit.is_mut() {
+                        if ui.small_button("<").clicked() {
+                            context.edit.push_edit(TreeEdit::Left);
+                        }
 
-                    if ui.small_button(">").clicked() {
-                        context.edit.push_edit(TreeEdit::Right);
+                        if ui.small_button(">").clicked() {
+                            context.edit.push_edit(TreeEdit::Right);
+                        }
                     }
 
                     ui.label(format!("Id: {:?}", cursor.sequence_id()));

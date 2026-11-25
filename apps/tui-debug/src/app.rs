@@ -10,6 +10,8 @@ use ron::ser::PrettyConfig;
 
 #[derive(Clone, Debug)]
 pub struct DebugApp {
+    pub immutable: bool,
+
     pub editor: RatatuiEditor,
 
     pub save_path: Option<PathBuf>,
@@ -28,6 +30,17 @@ impl DebugApp {
                 )
             })?;
             let event = event::read()?;
+
+            if self.immutable {
+                match event {
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Esc, ..
+                    }) => {
+                        break Ok(());
+                    }
+                    _ => continue,
+                }
+            }
 
             match event {
                 Event::Key(KeyEvent {

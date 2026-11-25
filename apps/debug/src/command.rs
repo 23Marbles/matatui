@@ -103,16 +103,21 @@ impl DebugApp {
             TreeEdit::Right => tree.move_right(),
         };
 
-        match &mut self.kind {
+        match self.kind {
             crate::app::AppKind::ImmutableMirror { .. }
             | crate::app::AppKind::ImmutableOwned { .. } => {
                 log::warn!("Tried to apply edit to an immutable `DebugApp`")
             }
-            crate::app::AppKind::MutableMirror { tree, .. } => {
+            crate::app::AppKind::MutableMirror {
+                shared_tree: ref tree,
+                ref mut cache,
+                ..
+            } => {
                 let mut tree = tree.write();
                 apply_edit(tree.deref_mut());
+                *cache = tree.clone();
             }
-            crate::app::AppKind::Owned { editor, .. } => apply_edit(editor),
+            crate::app::AppKind::Owned { ref mut editor, .. } => apply_edit(editor),
         }
     }
 }
