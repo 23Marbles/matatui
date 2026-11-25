@@ -48,26 +48,50 @@ impl LayoutEngine for RatatuiLayout {
             descent: 0,
         };
 
-        let results = sequence
-            .children()
-            .into_iter()
-            .map(|child| match child {
-                ChildRef::Atom(atom) => layout_atom(atom),
+        let mut results = Vec::new();
+
+        for child in sequence.children().into_iter() {
+            match child {
+                ChildRef::Atom(atom) => results.push(layout_atom(atom)),
                 ChildRef::Container(container_ref) => {
-                    let res = Self::layout_container(
-                        container_ref,
-                        check_cursor.then_some(cursor).flatten(),
-                    );
+                    let res = match container_ref.kind() {
+                        ContainerKind::SubScript { sequence }
+                            if let Some(prev) = results.last() =>
+                        {
+                            let previous_descent = prev.measurement.descent;
+
+                            sub_script(
+                                container_ref.tree().get_sequence(*sequence).unwrap(),
+                                cursor,
+                                previous_descent,
+                            )
+                        }
+                        ContainerKind::SuperScript { sequence }
+                            if let Some(prev) = results.last() =>
+                        {
+                            let previous_ascent = prev.measurement.ascent;
+
+                            super_script(
+                                container_ref.tree().get_sequence(*sequence).unwrap(),
+                                cursor,
+                                previous_ascent,
+                            )
+                        }
+                        _ => Self::layout_container(
+                            container_ref,
+                            check_cursor.then_some(cursor).flatten(),
+                        ),
+                    };
 
                     check_cursor ^= res.cursor_pos.is_some();
 
                     measurement.ascent = max(res.measurement.ascent, measurement.ascent);
                     measurement.descent = max(res.measurement.descent, measurement.descent);
 
-                    res
+                    results.push(res);
                 }
-            })
-            .collect::<Vec<_>>();
+            }
+        }
 
         let cursor_child = this_sequence_highlighted
             .then(|| cursor.and_then(Cursor::child_index))
@@ -107,7 +131,7 @@ impl LayoutEngine for RatatuiLayout {
                     let (x_text_offset, y_text_offset, height) = match (&res.kind, text_idx) {
                         (NodeKindRef::Text(_), Some(text_idx)) => (text_idx as i16, None, 1),
                         (NodeKindRef::Text(_), None) => (0, None, 1),
-                        (NodeKindRef::Operator(_) | NodeKindRef::SingleSequence(_), _) => (
+                        (NodeKindRef::Operator(_), _) => (
                             if let Some(
                                 ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),
                             ) = cursor_idx
@@ -121,6 +145,9 @@ impl LayoutEngine for RatatuiLayout {
                             None,
                             1,
                         ),
+                        (NodeKindRef::SingleSequence(_), _) => {
+                            (res.measurement.width.saturating_sub(1), None, 1)
+                        }
                         (NodeKindRef::Fraction { .. }, _) => (
                             if let Some(
                                 ChildRef::Container(_) | ChildRef::Atom(Atom::Operator(_)),

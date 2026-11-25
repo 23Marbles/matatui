@@ -54,7 +54,8 @@ pub fn sub_script<'a>(
         })),
         // Move the y pos first down by the ascent which has been cut off
         // and then by the previous descent we are also subtracting
-        cursor_pos: cursor_pos.map(|(x, y, h)| (x, y + measurement.ascent + previous_descent, h)),
+        cursor_pos: cursor_pos
+            .map(|(x, y, h)| (x, y + measurement.ascent + previous_descent - 1, h)),
         measurement: Measurement {
             width: measurement.width,
             ascent: 0,
